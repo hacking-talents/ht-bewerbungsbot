@@ -7,8 +7,12 @@ import {
 import { Stub, stub } from "https://deno.land/x/mock@v0.9.5/mod.ts";
 import { withMockedFetch } from "../http/http.test.ts";
 import { calculateDueDate } from "../tools.ts";
+import {
+  gitlabIssueTemplate,
+  GitlabIssueTemplateValues,
+} from "./../messages.ts";
 import Gitlab from "./gitlab.ts";
-import { Branch, GitlabProject, ImportStatus, User } from "./types.ts";
+import { Branch, GitlabProject, ImportStatus, Issue, User } from "./types.ts";
 
 const gitlab = () =>
   new Gitlab(
@@ -256,5 +260,48 @@ Deno.test("getUser makes correct api call", async () => {
   }, async () => {
     const response = await gitlab().getUser("Username2");
     assertEquals(response, user2);
+  });
+});
+
+Deno.test("createHomeworkIssue makes correct api call", async () => {
+  const issueTemplateValues: GitlabIssueTemplateValues = {
+    title: "title",
+    applicantName: "name",
+  };
+
+  const issue: Issue = {
+    title: "title",
+    assignee: {
+      id: 1,
+      name: "",
+      username: "",
+    },
+    web_url: "",
+  };
+
+  await withMockedFetch((input, init) => {
+    assertEquals(
+      input,
+      `${Gitlab.BASE_URL}/projects/projectId/issues`,
+    );
+    assertEquals(init?.method, "POST");
+    assertEquals(
+      init?.body,
+      JSON.stringify({
+        title: "title",
+        description: gitlabIssueTemplate(issueTemplateValues),
+        assignee_ids: "gitlabUserId",
+        due_date: "2020-01-31",
+      }),
+    );
+    return new Response(JSON.stringify(issue));
+  }, async () => {
+    const response = await gitlab().createHomeworkIssue(
+      "projectId",
+      "gitlabUserId",
+      new Date(2020, 1, 1),
+      issueTemplateValues,
+    );
+    assertEquals(response, issue);
   });
 });
