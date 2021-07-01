@@ -1,21 +1,24 @@
-import { assertEquals, assertThrowsAsync } from "https://deno.land/std@0.100.0/testing/asserts.ts";
+import {
+  assertEquals,
+  assertThrowsAsync,
+} from "https://deno.land/std@0.100.0/testing/asserts.ts";
 import HttpClient from "./http.ts";
 
 export async function withMockedFetch(
-  response: Response,
-  f: () => Promise<void>,
+  mockedFetch: (input: Request | URL | string, init?: RequestInit) => Response,
+  testFunction: () => Promise<void>,
 ) {
   const nativeFetch = window.fetch;
-  window.fetch = () => Promise.resolve(response);
+  window.fetch = (input, init) => Promise.resolve(mockedFetch(input, init));
 
-  await f();
+  await testFunction();
 
   window.fetch = nativeFetch;
 }
 
-Deno.test("global fetch function can be mocked", () => {
-  withMockedFetch(
-    new Response("testing"),
+Deno.test("global fetch function can be mocked", async () => {
+  await withMockedFetch(
+    () => new Response("testing"),
     async () => {
       const response = await fetch("url");
       const body = await response.text();
@@ -24,17 +27,27 @@ Deno.test("global fetch function can be mocked", () => {
   );
 });
 
-Deno.test("http client returns success response", () => {
-  withMockedFetch(new Response(JSON.stringify({ state: "success" })), async () => {
-    const httpClient = new HttpClient("baseUrl", "token");
-    const response = await httpClient.makeRequest<{ state: string }>("/");
-    assertEquals(response.state, "success");
-  });
+Deno.test("http client returns success response", async () => {
+  await withMockedFetch(
+    () => new Response(JSON.stringify({ state: "success" })),
+    async () => {
+      const httpClient = new HttpClient("baseUrl", "token");
+      const response = await httpClient.makeRequest<{ state: string }>("/");
+      assertEquals(response.state, "success");
+    },
+  );
 });
 
-Deno.test("http client throws error on unexpected status code", () => {
-  withMockedFetch(new Response("", { status: 400, statusText: "Bad Request" }), async () => {
-    const httpClient = new HttpClient("baseUrl", "token");
-    await assertThrowsAsync(() => httpClient.makeRequest<{ state: string }>("/"), Error, "unexpected status code 400");
-  });
+Deno.test("http client throws error on unexpected status code", async () => {
+  await withMockedFetch(
+    () => new Response("", { status: 400, statusText: "Bad Request" }),
+    async () => {
+      const httpClient = new HttpClient("baseUrl", "token");
+      await assertThrowsAsync(
+        () => httpClient.makeRequest<{ state: string }>("/"),
+        Error,
+        "unexpected status code 400",
+      );
+    },
+  );
 });
