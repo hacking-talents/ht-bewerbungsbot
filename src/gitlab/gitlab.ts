@@ -103,7 +103,8 @@ export default class Gitlab extends HttpClient {
       {
         method: "DELETE",
       },
-    ).then(() => console.log(`[Gitlab] Unprotected branch \"${branch.name}\"`));
+    );
+    console.log(`[Gitlab] Unprotected branch \"${branch.name}\"`);
   }
 
   async unprotectAllBranches(project: GitlabProject) {

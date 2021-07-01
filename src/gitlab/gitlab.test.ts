@@ -1,8 +1,10 @@
+// deno-lint-ignore-file camelcase
 import {
   assert,
   assertEquals,
   assertThrowsAsync,
 } from "https://deno.land/std@0.100.0/testing/asserts.ts";
+import { Stub, stub } from "https://deno.land/x/mock@v0.9.5/mod.ts";
 import { withMockedFetch } from "../http/http.test.ts";
 import { calculateDueDate } from "../tools.ts";
 import Gitlab from "./gitlab.ts";
@@ -109,11 +111,13 @@ Deno.test("getBranches makes correct api call", async () => {
         id: "id",
         web_url: "",
       });
-      assertEquals(branches, [{
-        name: "main",
-        protected: true,
-        default: true,
-      }]);
+      assertEquals(branches, [
+        {
+          name: "main",
+          protected: true,
+          default: true,
+        },
+      ]);
     },
   );
 });
@@ -146,4 +150,72 @@ Deno.test("addMaintainerToProject makes correct api call", async () => {
       );
     },
   );
+});
+
+Deno.test("forkHomework makes correct api call", async () => {
+  const gitlabInstance = gitlab();
+  const waitForForkFinishStub: Stub<Gitlab> = stub(
+    gitlabInstance,
+    "waitForForkFinish",
+  );
+  const unprotectAllBranchesStub: Stub<Gitlab> = stub(
+    gitlabInstance,
+    "unprotectAllBranches",
+  );
+  await withMockedFetch(
+    (input, init) => {
+      assertEquals(input, `${Gitlab.BASE_URL}/projects/projectId/fork`);
+      assertEquals(init?.method, "POST");
+      assertEquals(
+        init?.body,
+        JSON.stringify({
+          namespace_id: "homeworkNamespace",
+          name: "repoName",
+          path: "repoName",
+        }),
+      );
+      return new Response(
+        JSON.stringify({
+          name: "repoName",
+          id: "projectId",
+          web_url: "",
+        }),
+      );
+    },
+    async () => {
+      const homeworkFork = await gitlabInstance.forkHomework(
+        "projectId",
+        "repoName",
+      );
+      assertEquals(homeworkFork, {
+        name: "repoName",
+        id: "projectId",
+        web_url: "",
+      });
+      assert(
+        waitForForkFinishStub.calls.length == 1,
+        "waitForForkFinish has not been called exactly once",
+      );
+      assert(
+        unprotectAllBranchesStub.calls.length == 1,
+        "unprotectAllBranches has not been called exactly once",
+      );
+    },
+  );
+});
+
+Deno.test("unprotectBranch makes correct api call", async () => {
+  await withMockedFetch((input, init) => {
+    assertEquals(
+      input,
+      `${Gitlab.BASE_URL}/projects/projectId/protected_branches/branchName`,
+    );
+    assertEquals(init?.method, "DELETE");
+    return new Response();
+  }, async () => {
+    await gitlab().unprotectBranch(
+      { name: "projectName", id: "projectId", web_url: "" },
+      { name: "branchName", protected: true, default: true },
+    );
+  });
 });
