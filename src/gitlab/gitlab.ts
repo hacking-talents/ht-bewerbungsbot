@@ -120,7 +120,6 @@ export default class Gitlab extends HttpClient {
   async deleteProject(id: string) {
     await this.makeRequest(`/projects/${id}`, {
       method: "DELETE",
-      queryParams: { id: String(id) },
     });
 
     console.log(`[Gitlab] Deleted project with id ${id}`);

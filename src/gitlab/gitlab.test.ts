@@ -219,3 +219,19 @@ Deno.test("unprotectBranch makes correct api call", async () => {
     );
   });
 });
+
+Deno.test("deleteProject makes correct api call", async () => {
+  await withMockedFetch((input, init) => {
+    assertEquals(
+      input,
+      `${Gitlab.BASE_URL}/projects/projectId`,
+    );
+    assertEquals(init?.method, "DELETE");
+    return new Response();
+  }, async () => {
+    await gitlab().deleteProject(
+      "projectId",
+    );
+  });
+});
+
