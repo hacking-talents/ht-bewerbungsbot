@@ -10,6 +10,8 @@ import {
 import HttpClient from "../http/http.ts";
 
 export default class Gitlab extends HttpClient {
+  public static BASE_URL = "https://gitlab.com/api/v4";
+
   private templateNamespace: string;
   private homeworkNamespace: string;
   private webhookUrl: string;
@@ -20,7 +22,7 @@ export default class Gitlab extends HttpClient {
     homeworkNamespace: string,
     webhookUrl: string,
   ) {
-    super("https://gitlab.com/api/v4", apiToken);
+    super(Gitlab.BASE_URL, apiToken);
 
     this.templateNamespace = templateNamespace;
     this.homeworkNamespace = homeworkNamespace;
@@ -38,7 +40,7 @@ export default class Gitlab extends HttpClient {
       },
     );
 
-    return projects.filter((p) => p.name === name)[0];
+    return projects.find((p) => p.name === name);
   }
 
   async waitForForkFinish(homeworkForkId: string): Promise<void> {
