@@ -8,7 +8,7 @@ import { Stub, stub } from "https://deno.land/x/mock@v0.9.5/mod.ts";
 import { withMockedFetch } from "../http/http.test.ts";
 import { calculateDueDate } from "../tools.ts";
 import Gitlab from "./gitlab.ts";
-import { Branch, GitlabProject, ImportStatus } from "./types.ts";
+import { Branch, GitlabProject, ImportStatus, User } from "./types.ts";
 
 const gitlab = () =>
   new Gitlab(
@@ -235,3 +235,26 @@ Deno.test("deleteProject makes correct api call", async () => {
   });
 });
 
+Deno.test("getUser makes correct api call", async () => {
+  const user1: User = {
+    id: 1234,
+    username: "username1",
+    name: "",
+  };
+  const user2: User = {
+    id: 1235,
+    username: "username2",
+    name: "",
+  };
+  await withMockedFetch((input, init) => {
+    assertEquals(
+      input,
+      `${Gitlab.BASE_URL}/users?username=Username2`,
+    );
+    assertEquals(init?.method, "GET");
+    return new Response(JSON.stringify([user1, user2]));
+  }, async () => {
+    const response = await gitlab().getUser("Username2");
+    assertEquals(response, user2);
+  });
+});
