@@ -159,11 +159,15 @@ export default class Gitlab extends HttpClient {
       return undefined;
     }
 
-    const user = users.filter(
-      (user) => user.username.toLowerCase === username.toLowerCase,
-    )[0];
+    const user = users.find(
+      (user) => user.username.toLowerCase() === username.toLowerCase(),
+    );
 
-    console.log(`[Gitlab] Found User ${user!.username} with id ${user!.id}`);
+    if (user) {
+      console.log(`[Gitlab] Found User ${user.username} with id ${user.id}`);
+    } else {
+      console.warn(`[Gitlab] Cannot find user with username ${username}`);
+    }
 
     return user;
   }
