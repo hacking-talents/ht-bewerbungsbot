@@ -1,5 +1,6 @@
 export interface SendHomeworkTemplateValues {
   applicantName: string;
+  // deno-lint-ignore camelcase
   mk_signature: string;
   projectUrl: string;
   issueUrl: string;

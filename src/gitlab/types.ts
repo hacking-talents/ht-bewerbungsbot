@@ -7,10 +7,12 @@ export type Branch = {
 export type GitlabProject = {
   name: string;
   id: string;
+  // deno-lint-ignore camelcase
   web_url: string;
 };
 
 export type ImportStatus = {
+  // deno-lint-ignore camelcase
   import_status:
     | "failed"
     | "none"
@@ -29,5 +31,6 @@ export type User = {
 export type Issue = {
   title: string;
   assignee: User;
+  // deno-lint-ignore camelcase
   web_url: string;
 };

@@ -1,6 +1,8 @@
 export type Offer = {
   id: number;
+  // deno-lint-ignore camelcase
   offer_tags: string[];
+  // deno-lint-ignore camelcase
   pipeline_template: PipelineTemplate;
 };
 
@@ -49,14 +51,19 @@ export type CandidateDropdownField = CandidateField & {
 
 export type CandidateReference = {
   type: string;
+  // deno-lint-ignore camelcase
   first_name?: string;
 };
 
 export type Placement = {
+  // deno-lint-ignore camelcase
   candidate_id: number;
   id: number;
+  // deno-lint-ignore camelcase
   stage_id: number;
+  // deno-lint-ignore camelcase
   disqualify_reason: string;
+  // deno-lint-ignore camelcase
   offer_id: number;
 };
 
@@ -64,7 +71,9 @@ export type Task = {
   id: number;
   completed: boolean;
   title: string;
+  // deno-lint-ignore camelcase
   due_date: string;
+  // deno-lint-ignore camelcase
   created_at: string;
   references: CandidateReference[];
 };
