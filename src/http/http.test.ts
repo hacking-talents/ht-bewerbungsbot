@@ -9,7 +9,8 @@ export async function withMockedFetch(
   testFunction: () => Promise<void>,
 ) {
   const nativeFetch = window.fetch;
-  window.fetch = (input, init) => Promise.resolve(mockedFetch(input, init));
+  window.fetch = (input: Request | URL | string, init?: RequestInit) =>
+    Promise.resolve(mockedFetch(input, init));
 
   await testFunction();
 
