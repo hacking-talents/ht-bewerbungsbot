@@ -32,8 +32,10 @@ class CandidateFieldHasNoIDError extends Error {
 }
 
 export default class Recruitee extends HttpClient {
+  public static BASE_URL = "https://api.recruitee.com/c";
+
   constructor(companyId: string, apiToken: string) {
-    super(`https://api.recruitee.com/c/${companyId}`, apiToken);
+    super(`${Recruitee.BASE_URL}/${companyId}`, apiToken);
   }
 
   private async getOffersWithTag(tag: string): Promise<Offer[]> {
