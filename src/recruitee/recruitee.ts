@@ -23,6 +23,12 @@ const DEFAULT_SIGNATURE = "Deine Hacking Talents";
 const OFFER_BOT_TAG = "HT-Bot Target";
 const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
 
+class CandidateFieldHasNoIDError extends Error {
+  constructor() {
+    super("Expected Candidate Field to have an id. None given. Possibly the candidate is outdated?");
+  }
+}
+
 export default class Recruitee extends HttpClient {
   constructor(companyId: string, apiToken: string) {
     super(`https://api.recruitee.com/c/${companyId}`, apiToken);
@@ -172,6 +178,9 @@ export default class Recruitee extends HttpClient {
   }
 
   async clearProfileField(candidate: Candidate, field: CandidateField) {
+    if (field.id === undefined) {
+      throw new CandidateFieldHasNoIDError();
+    }
     console.log(
       `[Recruitee] Clearing profile field '${field.name}' for candidate ${candidate.id}`,
     );

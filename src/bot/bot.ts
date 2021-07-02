@@ -80,10 +80,7 @@ export default class Bot {
     await Promise.all(
       candidates.map((c) =>
         this.sendHomeworkForCandidate(c).catch((error) => {
-          this.recruitee.addNoteToCandidate(
-            c.id,
-            `error: ${error.message}`,
-          );
+          this.recruitee.addNoteToCandidate(c.id, `error: ${error.message}`);
           console.warn(error);
         })
       ),
@@ -171,14 +168,27 @@ export default class Bot {
     );
 
     if (this.deleteProjectInTheEnd) {
-      await this.gitlab.deleteProject(gitlabFork.id);
-      const repoField = this.recruitee.getProfileFieldByName(
-        candidate,
-        GITLAB_REPO_FIELD_NAME,
+      await this.deleteGitlabProjectAndRemoveRepoField(
+        candidate.id,
+        gitlabFork.id,
       );
-      if (repoField !== undefined) {
-        await this.recruitee.clearProfileField(candidate, repoField);
-      }
+    }
+  }
+
+  private async deleteGitlabProjectAndRemoveRepoField(
+    candidateId: number,
+    gitlabForkId: string,
+  ) {
+    // Retrieve candidate to get the most up-to-date profile field information
+    const candidate = await this.recruitee.getCandidateWithDetails(candidateId);
+    await this.gitlab.deleteProject(gitlabForkId);
+    const repoField = this.recruitee.getProfileFieldByName(
+      candidate,
+      GITLAB_REPO_FIELD_NAME,
+    );
+
+    if (repoField !== undefined) {
+      await this.recruitee.clearProfileField(candidate, repoField);
     }
   }
 
