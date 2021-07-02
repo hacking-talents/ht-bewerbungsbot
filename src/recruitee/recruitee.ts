@@ -17,7 +17,7 @@ import {
   TaskDetails,
 } from "./types.ts";
 
-const ADDRESS_FIELD_NAME = "Anrede Override";
+export const ADDRESS_FIELD_NAME = "Anrede Override";
 const ADMIN_REFERENCE_TYPE = "Admin";
 const DEFAULT_SIGNATURE = "Deine Hacking Talents";
 const OFFER_BOT_TAG = "HT-Bot Target";
@@ -104,7 +104,7 @@ export default class Recruitee extends HttpClient {
     });
   }
 
-  getCandidateAddress(candidate: Candidate): string {
+  getCandidateSalutation(candidate: Candidate): string {
     const addressOverride = candidate.fields.find(
       (field) => field.name == ADDRESS_FIELD_NAME,
     );

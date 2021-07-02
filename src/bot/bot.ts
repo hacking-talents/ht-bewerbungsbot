@@ -224,7 +224,7 @@ export default class Bot {
     gitlabFork: GitlabProject,
     dueDate: Date,
   ) {
-    const address = this.recruitee.getCandidateAddress(candidate);
+    const address = this.recruitee.getCandidateSalutation(candidate);
     const signature = this.recruitee.getSignature(candidate, references);
 
     const candidateMailAddress = candidate.emails[0]; // TODO: Handle multiple mail addresses
