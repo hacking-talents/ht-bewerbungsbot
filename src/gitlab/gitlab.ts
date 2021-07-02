@@ -8,6 +8,7 @@ import {
   User,
 } from "./types.ts";
 import HttpClient from "../http/http.ts";
+import { dateToISO } from "../tools.ts";
 
 export default class Gitlab extends HttpClient {
   public static BASE_URL = "https://gitlab.com/api/v4";
@@ -137,7 +138,7 @@ export default class Gitlab extends HttpClient {
       // deno-lint-ignore camelcase
       access_level: 30, // 30 = Developer
       // deno-lint-ignore camelcase
-      expires_at: expirationDate.toISOString().slice(0, 10),
+      expires_at: dateToISO(expirationDate),
     };
     await this.makeRequest(`/projects/${projectId}/members`, {
       method: "POST",
@@ -206,7 +207,7 @@ export default class Gitlab extends HttpClient {
       // deno-lint-ignore camelcase
       assignee_ids: gitlabUserId,
       // deno-lint-ignore camelcase
-      due_date: dueDate.toISOString().slice(0, 10), // slice out the day section of the ISO date
+      due_date: dateToISO(dueDate),
     };
 
     const issue = await this.makeRequest<Issue>(

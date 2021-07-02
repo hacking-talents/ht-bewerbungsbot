@@ -6,7 +6,6 @@ import {
 } from "https://deno.land/std@0.100.0/testing/asserts.ts";
 import { Stub, stub } from "https://deno.land/x/mock@v0.9.5/mod.ts";
 import { withMockedFetch } from "../http/http.test.ts";
-import { calculateDueDate } from "../tools.ts";
 import {
   gitlabIssueTemplate,
   GitlabIssueTemplateValues,
@@ -150,7 +149,7 @@ Deno.test("addMaintainerToProject makes correct api call", async () => {
       await gitlab.addMaintainerToProject(
         "projectId",
         "userId",
-        calculateDueDate(new Date(2000, 1, 1)),
+        new Date("2000-02-01"),
       );
     },
   );
@@ -291,7 +290,7 @@ Deno.test("createHomeworkIssue makes correct api call", async () => {
         title: "title",
         description: gitlabIssueTemplate(issueTemplateValues),
         assignee_ids: "gitlabUserId",
-        due_date: "2020-01-31",
+        due_date: "2020-01-01",
       }),
     );
     return new Response(JSON.stringify(issue));
@@ -299,7 +298,7 @@ Deno.test("createHomeworkIssue makes correct api call", async () => {
     const response = await gitlab().createHomeworkIssue(
       "projectId",
       "gitlabUserId",
-      new Date(2020, 1, 1),
+      new Date("2020-01-01"),
       issueTemplateValues,
     );
     assertEquals(response, issue);

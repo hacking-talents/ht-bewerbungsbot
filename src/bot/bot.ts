@@ -4,13 +4,14 @@ import Gitlab from "../gitlab/gitlab.ts";
 import { GitlabProject, Issue, User as GitlabUser } from "../gitlab/types.ts";
 import Recruitee from "../recruitee/recruitee.ts";
 import { Candidate, CandidateReference, Task } from "../recruitee/types.ts";
-import { calculateDueDate, MILLISECONDS_IN_A_DAY } from "../tools.ts";
+import { addDaysToDate } from "../tools.ts";
 import { isDropdownField, isSingleLineField } from "./../recruitee/tools.ts";
 
 const HOMEWORK_TASK_TITLE = "hausaufgabe";
 const HOMEWORK_FIELD_NAME = "Hausaufgabe";
 const GITLAB_USERNAME_FIELD_NAME = "GitLab Account";
 const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
+const DEFAULT_HOMEWORK_DURATION_IN_DAYS = 8;
 
 export default class Bot {
   private gitlab: Gitlab;
@@ -164,7 +165,7 @@ export default class Bot {
       homeworkTaskDetails.references,
       gitlabIssue,
       gitlabFork,
-      new Date(dueDate.getTime() - MILLISECONDS_IN_A_DAY),
+      addDaysToDate(dueDate, -1),
     );
 
     if (this.deleteProjectInTheEnd) {
@@ -256,12 +257,7 @@ export default class Bot {
     }`;
     const fork = await this.gitlab.forkHomework(homeworkProject!.id, forkName);
 
-    const dueDate = calculateDueDate(
-      homeworkTask.due_date == null
-        ? undefined
-        : new Date(homeworkTask.due_date),
-      new Date(homeworkTask.created_at),
-    );
+    const dueDate = this.calculateHomeworkDueDate(homeworkTask);
 
     await this.gitlab.addMaintainerToProject(
       fork.id,
@@ -279,6 +275,21 @@ export default class Bot {
     await this.setGitlabRepoProfileField(candidate, fork.web_url);
 
     return { issue, fork, dueDate };
+  }
+
+  private calculateHomeworkDueDate(homeworkTask: Task): Date {
+    let dueDate;
+
+    if (homeworkTask.due_date === null) {
+      dueDate = addDaysToDate(
+        new Date(homeworkTask.created_at),
+        DEFAULT_HOMEWORK_DURATION_IN_DAYS,
+      );
+    } else {
+      dueDate = new Date(homeworkTask.due_date);
+    }
+
+    return dueDate;
   }
 
   private async setGitlabRepoProfileField(

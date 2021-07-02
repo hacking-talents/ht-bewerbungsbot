@@ -25,7 +25,9 @@ const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
 
 class CandidateFieldHasNoIDError extends Error {
   constructor() {
-    super("Expected Candidate Field to have an id. None given. Possibly the candidate is outdated?");
+    super(
+      "Expected Candidate Field to have an id. None given. Possibly the candidate is outdated?",
+    );
   }
 }
 
