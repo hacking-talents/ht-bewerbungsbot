@@ -18,8 +18,9 @@ import {
 } from "./types.ts";
 
 export const ADDRESS_FIELD_NAME = "Anrede Override";
+export const SIGNATURE_FIELD_NAME = "Unterschrift Override";
 const ADMIN_REFERENCE_TYPE = "Admin";
-const DEFAULT_SIGNATURE = "Deine Hacking Talents";
+export const DEFAULT_SIGNATURE = "Deine Hacking Talents";
 const OFFER_BOT_TAG = "HT-Bot Target";
 const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
 
@@ -196,7 +197,7 @@ export default class Recruitee extends HttpClient {
 
   getSignature(candidate: Candidate, references: CandidateReference[]): string {
     const signatureOverride = candidate.fields.find(
-      (field) => field.name == "Unterschrift Override",
+      (field) => field.name == SIGNATURE_FIELD_NAME,
     );
 
     if (signatureOverride && isSingleLineField(signatureOverride)) {
@@ -211,7 +212,8 @@ export default class Recruitee extends HttpClient {
     );
 
     if (subscribedPersons.length > 0) {
-      const firstNames = subscribedPersons.map((person) => person.first_name!);
+      const firstNames = subscribedPersons.map((person) => person.first_name)
+        .filter((name): name is string => !!name);
       return this.buildSignatureFromNames(firstNames);
     }
     return DEFAULT_SIGNATURE;
@@ -315,13 +317,12 @@ export default class Recruitee extends HttpClient {
 
   private buildSignatureFromNames(names: string[]): string {
     if (names.length > 1) {
-      // deno-lint-ignore no-inner-declarations
-      var signature = names.pop() + " und " + names.pop();
-      names.forEach((name) => {
-        signature = name + ", " + signature;
-      });
-      return signature + " von den hacking talents";
+      const sorted = names.slice().sort();
+      const last = sorted.pop();
+      const remaining = sorted.join(", ");
+
+      return `${remaining} und ${last} von den hacking talents`;
     }
-    return names[0] + " von den hacking talents";
+    return `${names[0]} von den hacking talents`;
   }
 }
