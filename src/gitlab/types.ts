@@ -31,9 +31,3 @@ export type Issue = {
   assignee: User;
   web_url: string;
 };
-
-export type Hook = {
-  id: number;
-  project_id: number;
-  url: string;
-};

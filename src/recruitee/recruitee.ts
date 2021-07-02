@@ -22,7 +22,6 @@ export const SIGNATURE_FIELD_NAME = "Unterschrift Override";
 const ADMIN_REFERENCE_TYPE = "Admin";
 export const DEFAULT_SIGNATURE = "Deine Hacking Talents";
 const OFFER_BOT_TAG = "HT-Bot Target";
-const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
 
 class CandidateFieldHasNoIDError extends Error {
   constructor() {
@@ -278,22 +277,6 @@ export default class Recruitee extends HttpClient {
     );
 
     return fieldsWithName[0];
-  }
-
-  public async getCandidateByGitLabRepoUrl(
-    url: string,
-  ): Promise<Candidate | undefined> {
-    const candidates = await this.getAllQualifiedCandidates();
-
-    return candidates.find((candidate) => {
-      const field = this.getFieldByName(candidate, GITLAB_REPO_FIELD_NAME);
-      if (!isSingleLineField(field)) {
-        console.warn(
-          `[Bot] ${GITLAB_REPO_FIELD_NAME} field exists, but is not of type 'single line' for candidate ${candidate.id}`,
-        );
-      }
-      return (field as CandidateSingleLineField).values[0].text === url;
-    });
   }
 
   public async getAllQualifiedCandidates(): Promise<Candidate[]> {

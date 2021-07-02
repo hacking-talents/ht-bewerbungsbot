@@ -1,5 +1,3 @@
-import { GitlabIssueWebhookEvent } from "./../gitlab-hook/gitlab-hook.types.ts";
-import { createGitLabWebhookServer } from "../gitlab-hook/gitlab-hook.ts";
 import Gitlab from "../gitlab/gitlab.ts";
 import { GitlabProject, Issue, User as GitlabUser } from "../gitlab/types.ts";
 import Recruitee from "../recruitee/recruitee.ts";
@@ -23,57 +21,17 @@ export default class Bot {
     gitlab: Gitlab,
     recruitee: Recruitee,
     deleteProjectInTheEnd: boolean,
-    webhookPort: string,
     requiredTag?: string,
   ) {
     this.gitlab = gitlab;
     this.recruitee = recruitee;
     this.requiredTag = requiredTag || null;
     this.deleteProjectInTheEnd = deleteProjectInTheEnd;
-
-    createGitLabWebhookServer(webhookPort, this.handleIssueEvent);
   }
 
   async poll() {
     await this.sendAllPendingHomeworks().catch(console.warn);
   }
-
-  private handleIssueEvent = async (issueEvent: GitlabIssueWebhookEvent) => {
-    console.log(
-      `[Bot] Processing new issue webhook event for gitlab repo id: ${issueEvent.project.id}`,
-    );
-
-    if (issueEvent.object_attributes.action !== "close") {
-      console.log(
-        `[Bot] Ignore issue webhook event with action '${issueEvent.object_attributes.action}' for gitlab repo id: ${issueEvent.project.id}`,
-      );
-      return;
-    }
-
-    const candidate = await this.recruitee.getCandidateByGitLabRepoUrl(
-      issueEvent.project.web_url,
-    );
-
-    if (!candidate) {
-      console.warn(
-        `[Bot] No candidate found for gitlab repo: ${issueEvent.project.web_url}`,
-      );
-      return;
-    }
-
-    await this.recruitee.proceedCandidateToStage(
-      candidate,
-      "Hausaufgabe erhalten",
-    );
-
-    await this.recruitee.addNoteToCandidate(
-      candidate.id,
-      `📨 Hausaufgabe wurde abgegeben!`,
-    );
-    console.log(
-      `[Bot] Candidate with id: ${candidate.id} was moved to next stage`,
-    );
-  };
 
   private async sendAllPendingHomeworks() {
     const candidates = await this.recruitee.getAllQualifiedCandidates();

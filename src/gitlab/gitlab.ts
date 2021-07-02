@@ -2,7 +2,6 @@ import { gitlabIssueTemplate, GitlabIssueTemplateValues } from "../messages.ts";
 import {
   Branch,
   GitlabProject as GitlabProject,
-  Hook,
   ImportStatus,
   Issue,
   User,
@@ -15,19 +14,16 @@ export default class Gitlab extends HttpClient {
 
   private templateNamespace: string;
   private homeworkNamespace: string;
-  private webhookUrl: string;
 
   constructor(
     apiToken: string,
     templateNamespace: string,
     homeworkNamespace: string,
-    webhookUrl: string,
   ) {
     super(Gitlab.BASE_URL, apiToken);
 
     this.templateNamespace = templateNamespace;
     this.homeworkNamespace = homeworkNamespace;
-    this.webhookUrl = webhookUrl;
   }
 
   async getHomeworkProject(name: string): Promise<GitlabProject | undefined> {
@@ -170,28 +166,6 @@ export default class Gitlab extends HttpClient {
     }
 
     return user;
-  }
-
-  async createIssuesWebhook(projectId: string): Promise<Hook> {
-    const body = {
-      id: projectId,
-      url: `${this.webhookUrl}/hooks`, //TODO: add webhook endpoint
-      // deno-lint-ignore camelcase
-      issues_events: true,
-      // deno-lint-ignore camelcase
-      push_events: false,
-      // deno-lint-ignore camelcase
-      enable_ssl_verification: false,
-    };
-
-    const hook = await this.makeRequest<Hook>(`/projects/${projectId}/hooks`, {
-      method: "POST",
-      body,
-    });
-
-    console.log(`[Gitlab] created webhook for issue events`);
-
-    return hook;
   }
 
   async createHomeworkIssue(

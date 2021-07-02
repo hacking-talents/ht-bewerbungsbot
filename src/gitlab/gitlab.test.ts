@@ -18,7 +18,6 @@ const gitlab = () =>
     "gitlabToken",
     "templateNamespace",
     "homeworkNamespace",
-    "webhookUrl",
   );
 
 Deno.test("getHomeworkProject makes correct api call", async () => {
@@ -140,13 +139,7 @@ Deno.test("addMaintainerToProject makes correct api call", async () => {
       return new Response();
     },
     async () => {
-      const gitlab = new Gitlab(
-        "gitlabToken",
-        "templateNamespace",
-        "homeworkNamespace",
-        "webhookUrl",
-      );
-      await gitlab.addMaintainerToProject(
+      await gitlab().addMaintainerToProject(
         "projectId",
         "userId",
         new Date("2000-02-01"),

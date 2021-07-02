@@ -17,8 +17,6 @@ const {
   GITLAB_HOMEWORK_NAMESPACE,
   RECRUITEE_TOKEN,
   COMPANY_ID,
-  WEBHOOK_URL,
-  PORT,
 } = Deno.env.toObject();
 
 if (!GITLAB_TOKEN) {
@@ -36,9 +34,6 @@ if (!RECRUITEE_TOKEN) {
 if (!COMPANY_ID) {
   exitWithError("No COMPANY_ID given");
 }
-if (!WEBHOOK_URL) {
-  exitWithError("No WEBHOOK_URL given");
-}
 
 if (tagRequired != undefined) {
   console.log(
@@ -50,7 +45,6 @@ const gitlab = new Gitlab(
   GITLAB_TOKEN,
   GITLAB_TEMPLATES_NAMESPACE,
   GITLAB_HOMEWORK_NAMESPACE,
-  WEBHOOK_URL,
 );
 
 const recruitee = new Recruitee(COMPANY_ID, RECRUITEE_TOKEN);
@@ -59,7 +53,6 @@ const bot = new Bot(
   gitlab,
   recruitee,
   deleteProjectInTheEnd,
-  PORT || "8080",
   tagRequired,
 );
 
