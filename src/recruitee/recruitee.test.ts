@@ -1,6 +1,7 @@
 import { assertEquals } from "https://deno.land/std@0.100.0/testing/asserts.ts";
 import {
   Candidate,
+  CandidateField,
   CandidateReference,
   CandidateSingleLineField,
   MinimalCandidate,
@@ -259,6 +260,68 @@ Deno.test("sendMailToCandidate uses the correct URL and HTTP method", () => {
 });
 
 Deno.test(
+  "updateProfileFieldSingleLine adds a new line and uses the correct URL and HTTP method",
+  () => {
+    const mockedCandidate = mockCandidate();
+    const candidateId = mockedCandidate.id;
+    const mockedCandidateSingleLineField = mockCandidateSingleLineField(null, [
+      "Homework",
+    ]);
+    const content = ["Swapgate"];
+
+    withMockedFetch(
+      (input, init) => {
+        assertEquals(
+          input,
+          `${Recruitee.BASE_URL}/companyId/custom_fields/candidates/${candidateId}/fields`,
+        );
+        assertEquals(init?.method, "POST");
+        return new Response();
+      },
+      async () => {
+        const r = recruitee();
+        await r.updateProfileFieldSingleLine(
+          mockedCandidate,
+          mockedCandidateSingleLineField,
+          content,
+        );
+      },
+    );
+  },
+);
+
+Deno.test(
+  "updateProfileFieldSingleLine adds a new line and uses the correct URL and HTTP method",
+  () => {
+    const mockedCandidate = mockCandidate();
+    const candidateId = mockedCandidate.id;
+    const mockedCandidateSingleLineField = mockCandidateSingleLineField(123, [
+      "Homework",
+    ]);
+    const content = ["Swapgate"];
+
+    withMockedFetch(
+      (input, init) => {
+        assertEquals(
+          input,
+          `${Recruitee.BASE_URL}/companyId/custom_fields/candidates/${candidateId}/fields/${mockedCandidateSingleLineField.id}`,
+        );
+        assertEquals(init?.method, "PATCH");
+        return new Response();
+      },
+      async () => {
+        const r = recruitee();
+        await r.updateProfileFieldSingleLine(
+          mockedCandidate,
+          mockedCandidateSingleLineField,
+          content,
+        );
+      },
+    );
+  },
+);
+
+Deno.test(
   "getSignature returns default signature when no assignees are specified",
   () => {
     const c: Candidate = {
@@ -384,5 +447,26 @@ function mockSendHomeworkTemplateValues(): SendHomeworkTemplateValues {
     projectUrl: "",
     issueUrl: "",
     homeworkDueDate: new Date(),
+  };
+}
+
+function mockCandidateField(id: number | null): CandidateField {
+  return {
+    name: "",
+    id: id,
+    kind: "single_line",
+  };
+}
+
+function mockCandidateSingleLineField(
+  id: number | null,
+  values: string[],
+): CandidateSingleLineField {
+  return {
+    ...mockCandidateField(id),
+    kind: "single_line",
+    values: values.map((value) => {
+      return { text: value };
+    }),
   };
 }
