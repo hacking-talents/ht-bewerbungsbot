@@ -11,6 +11,11 @@ Deno.test("addDaysToDate correctly subtracts given number of days", () => {
   assertEquals(actual, new Date("2018-05-11"));
 });
 
+Deno.test("addDaysToDate correctly changes year", () => {
+  const actual = addDaysToDate(new Date("2018-12-30"), 2);
+  assertEquals(actual, new Date("2019-01-01"));
+});
+
 Deno.test("dateToISO correctly converts date from Date", () => {
   const actual = dateToISO(new Date("2018-05-13"));
   assertEquals(actual, "2018-05-13");
