@@ -79,7 +79,7 @@ export default class Gitlab extends HttpClient {
   ): Promise<GitlabProject> {
     const homeworkFork = await this.forkProject(homeworkProjectId, repoName);
 
-    if (!homeworkFork) throw Error("Failed to fork project.");
+    if (!homeworkFork) throw Error("[Gitlab] Failed to fork project.");
 
     await this.waitForForkFinish(homeworkFork.id);
 
