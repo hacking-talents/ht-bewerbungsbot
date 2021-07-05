@@ -166,9 +166,8 @@ export default class Recruitee extends HttpClient {
     }
 
     const body = { field: field };
-    const fieldExists = field.id !== null;
 
-    if (fieldExists) {
+    if (field.id !== null) {
       await this.makeRequest(
         `/custom_fields/candidates/${candidate.id.toString()}/fields/${field.id.toString()}`,
         { method: "PATCH", body },
@@ -188,10 +187,12 @@ export default class Recruitee extends HttpClient {
     console.log(
       `[Recruitee] Clearing profile field '${field.name}' for candidate ${candidate.id}`,
     );
-    await this.makeRequest(
-      `/custom_fields/candidates/${candidate.id.toString()}/fields/${field.id.toString()}`,
-      { method: "DELETE" },
-    );
+    if (field.id !== null) {
+      await this.makeRequest(
+        `/custom_fields/candidates/${candidate.id.toString()}/fields/${field.id.toString()}`,
+        { method: "DELETE" },
+      );
+    }
   }
 
   getSignature(candidate: Candidate, references: CandidateReference[]): string {
@@ -285,7 +286,7 @@ export default class Recruitee extends HttpClient {
     const candidates = await this.getAllCandidatesForOffers(offers);
 
     return await Promise.all(
-      candidates.map((candidate) => this.getCandidateWithDetails(candidate.id)),
+      candidates.map((candidate) => this.getCandidateById(candidate.id)),
     );
   }
 
