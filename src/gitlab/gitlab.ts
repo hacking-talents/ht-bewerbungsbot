@@ -18,7 +18,7 @@ export default class Gitlab extends HttpClient {
   constructor(
     apiToken: string,
     templateNamespace: string,
-    homeworkNamespace: string,
+    homeworkNamespace: string
   ) {
     super(Gitlab.BASE_URL, apiToken);
 
@@ -34,7 +34,7 @@ export default class Gitlab extends HttpClient {
       `/groups/${this.templateNamespace}/projects`,
       {
         queryParams,
-      },
+      }
     );
 
     return projects.find((p) => p.name === name);
@@ -63,7 +63,7 @@ export default class Gitlab extends HttpClient {
     let retryCount = 100;
     while (importStatus !== "finished") {
       const importStatusResponse = await this.makeRequest<ImportStatus>(
-        `/projects/${homeworkForkId}/import`,
+        `/projects/${homeworkForkId}/import`
       );
       importStatus = importStatusResponse["import_status"];
       if (importStatus === "failed" || --retryCount === 0) {
@@ -75,7 +75,7 @@ export default class Gitlab extends HttpClient {
 
   async forkHomework(
     homeworkProjectId: string,
-    repoName: string,
+    repoName: string
   ): Promise<GitlabProject> {
     const homeworkFork = await this.forkProject(homeworkProjectId, repoName);
 
@@ -91,7 +91,7 @@ export default class Gitlab extends HttpClient {
     console.warn("[Gitlab] Successfully unprotected branches");
 
     console.log(
-      `[Gitlab] Forked Git Repo with id ${homeworkProjectId} as \"${repoName}\"`,
+      `[Gitlab] Forked Git Repo with id ${homeworkProjectId} as \"${repoName}\"`
     );
 
     return homeworkFork;
@@ -99,7 +99,7 @@ export default class Gitlab extends HttpClient {
 
   async getBranches(project: GitlabProject): Promise<Branch[]> {
     return await this.makeRequest(
-      `/projects/${project.id}/repository/branches`,
+      `/projects/${project.id}/repository/branches`
     );
   }
 
@@ -108,7 +108,7 @@ export default class Gitlab extends HttpClient {
       `/projects/${project.id}/protected_branches/${branch.name}`,
       {
         method: "DELETE",
-      },
+      }
     );
     console.log(`[Gitlab] Unprotected branch \"${branch.name}\"`);
   }
@@ -119,7 +119,7 @@ export default class Gitlab extends HttpClient {
     await Promise.all(
       branches.map(async (branch) => {
         await this.unprotectBranch(project, branch);
-      }),
+      })
     );
   }
 
@@ -134,7 +134,7 @@ export default class Gitlab extends HttpClient {
   async addMaintainerToProject(
     projectId: string,
     userId: string,
-    expirationDate: Date,
+    expirationDate: Date
   ): Promise<void> {
     const body = {
       id: projectId,
@@ -151,7 +151,7 @@ export default class Gitlab extends HttpClient {
     });
 
     console.log(
-      `[Gitlab] Added user with id ${userId} to Repo with id ${projectId}`,
+      `[Gitlab] Added user with id ${userId} to Repo with id ${projectId}`
     );
   }
 
@@ -165,7 +165,7 @@ export default class Gitlab extends HttpClient {
     }
 
     const user = users.find(
-      (user) => user.username.toLowerCase() === username.toLowerCase(),
+      (user) => user.username.toLowerCase() === username.toLowerCase()
     );
 
     if (user) {
@@ -181,7 +181,7 @@ export default class Gitlab extends HttpClient {
     projectId: string,
     gitlabUserId: string,
     dueDate: Date,
-    gitlabIssueTemplateValues: GitlabIssueTemplateValues,
+    gitlabIssueTemplateValues: GitlabIssueTemplateValues
   ): Promise<Issue> {
     const issueTemplate = gitlabIssueTemplate(gitlabIssueTemplateValues);
     const body = {
@@ -198,11 +198,11 @@ export default class Gitlab extends HttpClient {
       {
         method: "POST",
         body,
-      },
+      }
     );
 
     console.log(
-      `[Gitlab] Created Issue \"${issue.title}\" with assignee ${issue.assignee.username}`,
+      `[Gitlab] Created Issue \"${issue.title}\" with assignee ${issue.assignee.username}`
     );
 
     return issue;
