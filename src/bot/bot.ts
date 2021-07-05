@@ -139,7 +139,7 @@ export default class Bot {
     gitlabForkId: string,
   ) {
     // Retrieve candidate to get the most up-to-date profile field information
-    const candidate = await this.recruitee.getCandidateWithDetails(candidateId);
+    const candidate = await this.recruitee.getCandidateById(candidateId);
     await this.gitlab.deleteProject(gitlabForkId);
     const repoField = this.recruitee.getProfileFieldByName(
       candidate,

@@ -38,7 +38,7 @@ export default class Recruitee extends HttpClient {
     super(`${Recruitee.BASE_URL}/${companyId}`, apiToken);
   }
 
-  private async getOffersWithTag(tag: string): Promise<Offer[]> {
+  async getOffersWithTag(tag: string): Promise<Offer[]> {
     const allOffers = await this.makeRequest<{ offers: Offer[] }>(`/offers`);
 
     return allOffers.offers.filter((offer: Offer) => {
@@ -69,7 +69,7 @@ export default class Recruitee extends HttpClient {
     return response;
   }
 
-  async getCandidateWithDetails(candidateId: number): Promise<Candidate> {
+  async getCandidateById(candidateId: number): Promise<Candidate> {
     const candidateDetails = await this.makeRequest<CandidateDetails>(
       `/candidates/${candidateId}`,
     );
@@ -127,7 +127,7 @@ export default class Recruitee extends HttpClient {
     candidate_email: string,
     subject: string, // TODO: extract subject into Mail-templates
     sendHomeworkTemplateValues: SendHomeworkTemplateValues,
-  ): Promise<unknown> {
+  ): Promise<void> {
     const homeworkMailContent = sendHomeworkTemplate(
       sendHomeworkTemplateValues,
     );
@@ -144,7 +144,7 @@ export default class Recruitee extends HttpClient {
       ],
     };
 
-    return await this.makeRequest(`/mailbox/send`, {
+    await this.makeRequest(`/mailbox/send`, {
       method: "POST",
       body: body,
     });
