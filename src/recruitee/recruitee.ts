@@ -301,7 +301,7 @@ export default class Recruitee extends HttpClient {
 
   private buildSignatureFromNames(names: string[]): string {
     if (names.length > 1) {
-      const sorted = names.slice().sort();
+      const sorted = names.sort();
       const last = sorted.pop();
       const remaining = sorted.join(", ");
 
