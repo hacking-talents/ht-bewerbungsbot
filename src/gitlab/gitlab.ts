@@ -40,6 +40,22 @@ export default class Gitlab extends HttpClient {
     return projects.find((p) => p.name === name);
   }
 
+  async forkProject(
+    homeworkProjectId: string,
+    repoName: string
+  ): Promise<GitlabProject> {
+    const body = {
+      // deno-lint-ignore camelcase
+      namespace_id: this.homeworkNamespace,
+      name: repoName,
+      path: repoName,
+    };
+    return this.makeRequest<GitlabProject>(
+      `/projects/${homeworkProjectId}/fork`,
+      { method: "POST", body }
+    );
+  }
+
   async waitForForkFinish(homeworkForkId: string): Promise<void> {
     console.log("[Gitlab] Forking project...");
 
@@ -61,16 +77,9 @@ export default class Gitlab extends HttpClient {
     homeworkProjectId: string,
     repoName: string,
   ): Promise<GitlabProject> {
-    const body = {
-      // deno-lint-ignore camelcase
-      namespace_id: this.homeworkNamespace,
-      name: repoName,
-      path: repoName,
-    };
-    const homeworkFork = await this.makeRequest<GitlabProject>(
-      `/projects/${homeworkProjectId}/fork`,
-      { method: "POST", body },
-    );
+    const homeworkFork = await this.forkProject(homeworkProjectId, repoName);
+
+    if (!homeworkFork) throw Error("Failed to fork project.");
 
     await this.waitForForkFinish(homeworkFork.id);
 
