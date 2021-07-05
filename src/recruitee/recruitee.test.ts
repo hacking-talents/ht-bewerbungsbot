@@ -1,4 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.100.0/testing/asserts.ts";
+import { stub } from "https://deno.land/x/mock@v0.9.5/stub.ts";
 import {
   Candidate,
   CandidateField,
@@ -6,6 +7,8 @@ import {
   CandidateSingleLineField,
   MinimalCandidate,
   Offer,
+  Placement,
+  StageDetail,
   Task,
   TaskDetails,
 } from "./types.ts";
@@ -321,6 +324,27 @@ Deno.test(
   },
 );
 
+Deno.test("clearProfileField uses the correct URL and HTTP method", () => {
+  const mockedCandidate = mockCandidate();
+  const candidateId = mockedCandidate.id;
+  const mockedCandidateField = mockCandidateField(125);
+
+  withMockedFetch(
+    (input, init) => {
+      assertEquals(
+        input,
+        `${Recruitee.BASE_URL}/companyId/custom_fields/candidates/${candidateId}/fields/${mockedCandidateField.id}`,
+      );
+      assertEquals(init?.method, "DELETE");
+      return new Response();
+    },
+    async () => {
+      const r = recruitee();
+      await r.clearProfileField(mockedCandidate, mockedCandidateField);
+    },
+  );
+});
+
 Deno.test(
   "getSignature returns default signature when no assignees are specified",
   () => {
@@ -394,6 +418,90 @@ Deno.test(
   },
 );
 
+Deno.test(
+  "proceedCandidateToStage uses the correct URL and HTTP method",
+  () => {
+    const mockedCandidate = mockCandidate();
+    mockedCandidate.placements = [mockPlacement(7)];
+    const nextStage = "Invited to interview";
+    const stageId = 535;
+
+    withMockedFetch(
+      (input, init) => {
+        assertEquals(
+          input,
+          `${Recruitee.BASE_URL}/companyId/placements/${
+            mockedCandidate.placements[0].id
+          }/change_stage?stage_id=${stageId}&proceed=true`,
+        );
+        assertEquals(init?.method, "PATCH");
+        return new Response();
+      },
+      async () => {
+        const r = recruitee();
+        await stub(r, "getStagesByName", () => {
+          return [{ id: stageId }];
+        });
+        r.proceedCandidateToStage(mockedCandidate, nextStage);
+      },
+    );
+  },
+);
+
+Deno.test("getStagesByName returns correct stages", () => {
+  const stageName = "Homework sent";
+  const offerId = 13212;
+
+  const mockedOffers = [
+    mockOffer(
+      offerId,
+      ["Fachinformatiker"],
+      [
+        { id: "5", name: stageName },
+        { id: "7", name: "Invited to interview" },
+        { id: "435", name: stageName },
+        { id: "5", name: "Quatsch" },
+      ],
+    ),
+    mockOffer(
+      70973,
+      ["Fachinformatiker"],
+      [{ id: "7", name: "Invited to interview" }],
+    ),
+    mockOffer(
+      546345734,
+      ["Fachinformatiker"],
+      [
+        { id: "5", name: stageName },
+        { id: "7", name: "Invited to interview" },
+      ],
+    ),
+  ];
+
+  withMockedFetch(
+    (input, init) => {
+      assertEquals(
+        input,
+        `${Recruitee.BASE_URL}/companyId/offers?scope=not_archived&view_mode=default`,
+      );
+      assertEquals(init?.method, "GET");
+      return new Response(
+        JSON.stringify({
+          offers: mockedOffers,
+        }),
+      );
+    },
+    async () => {
+      const r = recruitee();
+      const actual = await r.getStagesByName(stageName, offerId);
+      assertEquals(actual, [
+        { id: "5", name: "Homework sent" },
+        { id: "435", name: "Homework sent" },
+      ]);
+    },
+  );
+});
+
 function mockAssignee(firstName: string): CandidateReference {
   return {
     type: "Admin",
@@ -412,12 +520,26 @@ function mockCandidate(): Candidate {
   };
 }
 
-function mockOffer(id: number, tags: string[] = []): Offer {
+function mockPlacement(id: number): Placement {
+  return {
+    candidate_id: 123,
+    id: id,
+    stage_id: 36345,
+    disqualify_reason: "",
+    offer_id: 7646574,
+  };
+}
+
+function mockOffer(
+  id: number,
+  tags: string[] = [],
+  stages: StageDetail[] = [],
+): Offer {
   return {
     id,
     offer_tags: tags,
     pipeline_template: {
-      stages: [],
+      stages: stages,
     },
   };
 }
