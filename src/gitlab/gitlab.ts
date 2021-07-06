@@ -86,7 +86,7 @@ export default class Gitlab extends HttpClient {
     try {
       await this.unprotectAllBranches(homeworkFork);
     } catch (e) {
-      console.log(e);
+      throw e;
     }
     console.warn("[Gitlab] Successfully unprotected branches");
 
@@ -161,6 +161,7 @@ export default class Gitlab extends HttpClient {
     });
 
     if (users.length == 0) {
+      console.warn(`[Gitlab] Cannot find user with username ${username}`);
       return undefined;
     }
 
@@ -168,11 +169,7 @@ export default class Gitlab extends HttpClient {
       (user) => user.username.toLowerCase() === username.toLowerCase(),
     );
 
-    if (user) {
-      console.log(`[Gitlab] Found User ${user.username} with id ${user.id}`);
-    } else {
-      console.warn(`[Gitlab] Cannot find user with username ${username}`);
-    }
+    console.log(`[Gitlab] Found User ${user?.username} with id ${user?.id}`);
 
     return user;
   }
