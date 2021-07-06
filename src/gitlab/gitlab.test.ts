@@ -363,7 +363,7 @@ Deno.test(
       (input, init) => {
         assertEquals(input, `${Gitlab.BASE_URL}/users?username=Username2`);
         assertEquals(init?.method, "GET");
-        return new Response(JSON.stringify([user1]));
+        return new Response(JSON.stringify([]));
       },
       async () => {
         const response = await gitlab().getUser("Username2");
