@@ -509,9 +509,9 @@ function mockAssignee(firstName: string): CandidateReference {
   };
 }
 
-function mockCandidate(): Candidate {
+function mockCandidate(id = 123): Candidate {
   return {
-    id: 123,
+    id,
     emails: [],
     name: "",
     fields: [],
