@@ -169,7 +169,9 @@ export default class Recruitee extends HttpClient {
 
     if (field.id !== null) {
       await this.makeRequest(
-        `/custom_fields/candidates/${candidate.id.toString()}/fields/${field.id.toString()}`,
+        `/custom_fields/candidates/${candidate.id.toString()}/fields/${
+          field.id?.toString()
+        }`,
         { method: "PATCH", body },
       );
     } else {

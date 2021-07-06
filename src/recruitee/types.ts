@@ -25,7 +25,7 @@ export type Candidate = MinimalCandidate & {
 
 export type CandidateField = {
   name: string;
-  id: number | null;
+  id: number | null | undefined;
   kind:
     | "dropdown"
     | "single_line"

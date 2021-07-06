@@ -572,7 +572,7 @@ function mockSendHomeworkTemplateValues(): SendHomeworkTemplateValues {
   };
 }
 
-function mockCandidateField(id: number | null): CandidateField {
+function mockCandidateField(id: number | null | undefined): CandidateField {
   return {
     name: "",
     id: id,
