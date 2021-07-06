@@ -14,11 +14,7 @@ import Gitlab from "./gitlab.ts";
 import { Branch, GitlabProject, ImportStatus, Issue, User } from "./types.ts";
 
 const gitlab = () =>
-  new Gitlab(
-    "gitlabToken",
-    "templateNamespace",
-    "homeworkNamespace",
-  );
+  new Gitlab("gitlabToken", "templateNamespace", "homeworkNamespace");
 
 Deno.test("getHomeworkProject makes correct api call", async () => {
   await withMockedFetch(
@@ -148,7 +144,66 @@ Deno.test("addMaintainerToProject makes correct api call", async () => {
   );
 });
 
-Deno.test("forkHomework makes correct api call", async () => {
+Deno.test("forkProject makes a correct api call", async () => {
+  const mockProject = {
+    id: "projectId",
+    name: "repoName",
+    web_url: "",
+  };
+  const projectId = "projectId";
+  await withMockedFetch(
+    (input, init) => {
+      assertEquals(input, `${Gitlab.BASE_URL}/projects/${projectId}/fork`);
+      assertEquals(init?.method, "POST");
+      return new Response(JSON.stringify(mockProject));
+    },
+    async () => {
+      await gitlab().forkProject(projectId, "repoName");
+    },
+  );
+});
+
+Deno.test(
+  "forkHomework forks a project, waits until finished and unprotects branches",
+  async () => {
+    const gitlabInstance = gitlab();
+    const mockProject = {
+      id: "projectId",
+      name: "repoName",
+      web_url: "",
+    };
+    const waitForForkFinishStub: Stub<Gitlab> = stub(
+      gitlabInstance,
+      "waitForForkFinish",
+    );
+    const unprotectAllBranchesStub: Stub<Gitlab> = stub(
+      gitlabInstance,
+      "unprotectAllBranches",
+    );
+    const forkProjectStub: Stub<Gitlab> = stub(gitlabInstance, "forkProject", [
+      mockProject,
+    ]);
+    const homeworkFork = await gitlabInstance.forkHomework(
+      "projectId",
+      "repoName",
+    );
+    assertEquals(homeworkFork, mockProject);
+    assert(
+      waitForForkFinishStub.calls.length == 1,
+      "waitForForkFinish has not been called exactly once",
+    );
+    assert(
+      unprotectAllBranchesStub.calls.length == 1,
+      "unprotectAllBranches has not been called exactly once",
+    );
+    assert(
+      forkProjectStub.calls.length == 1,
+      "forkProject has not been called exactly once",
+    );
+  },
+);
+
+Deno.test("forkHomework forks a project but forkProject fails", async () => {
   const gitlabInstance = gitlab();
   const waitForForkFinishStub: Stub<Gitlab> = stub(
     gitlabInstance,
@@ -158,77 +213,56 @@ Deno.test("forkHomework makes correct api call", async () => {
     gitlabInstance,
     "unprotectAllBranches",
   );
+  const forkProjectStub: Stub<Gitlab> = stub(gitlabInstance, "forkProject", [
+    undefined,
+  ]);
+  await assertThrowsAsync(async () =>
+    await gitlabInstance.forkHomework("projectId", "repoName")
+  );
+  assert(
+    waitForForkFinishStub.calls.length == 0,
+    "waitForForkFinish has been called",
+  );
+  assert(
+    unprotectAllBranchesStub.calls.length == 0,
+    "unprotectAllBranches has been called",
+  );
+  assert(
+    forkProjectStub.calls.length == 1,
+    "forkProject has not been called exactly once",
+  );
+});
+
+Deno.test("unprotectBranch makes correct api call", async () => {
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/projects/projectId/fork`);
-      assertEquals(init?.method, "POST");
       assertEquals(
-        init?.body,
-        JSON.stringify({
-          namespace_id: "homeworkNamespace",
-          name: "repoName",
-          path: "repoName",
-        }),
+        input,
+        `${Gitlab.BASE_URL}/projects/projectId/protected_branches/branchName`,
       );
-      return new Response(
-        JSON.stringify({
-          name: "repoName",
-          id: "projectId",
-          web_url: "",
-        }),
-      );
+      assertEquals(init?.method, "DELETE");
+      return new Response();
     },
     async () => {
-      const homeworkFork = await gitlabInstance.forkHomework(
-        "projectId",
-        "repoName",
-      );
-      assertEquals(homeworkFork, {
-        name: "repoName",
-        id: "projectId",
-        web_url: "",
-      });
-      assert(
-        waitForForkFinishStub.calls.length == 1,
-        "waitForForkFinish has not been called exactly once",
-      );
-      assert(
-        unprotectAllBranchesStub.calls.length == 1,
-        "unprotectAllBranches has not been called exactly once",
+      await gitlab().unprotectBranch(
+        { name: "projectName", id: "projectId", web_url: "" },
+        { name: "branchName", protected: true, default: true },
       );
     },
   );
 });
 
-Deno.test("unprotectBranch makes correct api call", async () => {
-  await withMockedFetch((input, init) => {
-    assertEquals(
-      input,
-      `${Gitlab.BASE_URL}/projects/projectId/protected_branches/branchName`,
-    );
-    assertEquals(init?.method, "DELETE");
-    return new Response();
-  }, async () => {
-    await gitlab().unprotectBranch(
-      { name: "projectName", id: "projectId", web_url: "" },
-      { name: "branchName", protected: true, default: true },
-    );
-  });
-});
-
 Deno.test("deleteProject makes correct api call", async () => {
-  await withMockedFetch((input, init) => {
-    assertEquals(
-      input,
-      `${Gitlab.BASE_URL}/projects/projectId`,
-    );
-    assertEquals(init?.method, "DELETE");
-    return new Response();
-  }, async () => {
-    await gitlab().deleteProject(
-      "projectId",
-    );
-  });
+  await withMockedFetch(
+    (input, init) => {
+      assertEquals(input, `${Gitlab.BASE_URL}/projects/projectId`);
+      assertEquals(init?.method, "DELETE");
+      return new Response();
+    },
+    async () => {
+      await gitlab().deleteProject("projectId");
+    },
+  );
 });
 
 Deno.test("getUser makes correct api call", async () => {
@@ -242,17 +276,17 @@ Deno.test("getUser makes correct api call", async () => {
     username: "username2",
     name: "",
   };
-  await withMockedFetch((input, init) => {
-    assertEquals(
-      input,
-      `${Gitlab.BASE_URL}/users?username=Username2`,
-    );
-    assertEquals(init?.method, "GET");
-    return new Response(JSON.stringify([user1, user2]));
-  }, async () => {
-    const response = await gitlab().getUser("Username2");
-    assertEquals(response, user2);
-  });
+  await withMockedFetch(
+    (input, init) => {
+      assertEquals(input, `${Gitlab.BASE_URL}/users?username=Username2`);
+      assertEquals(init?.method, "GET");
+      return new Response(JSON.stringify([user1, user2]));
+    },
+    async () => {
+      const response = await gitlab().getUser("Username2");
+      assertEquals(response, user2);
+    },
+  );
 });
 
 Deno.test("createHomeworkIssue makes correct api call", async () => {
@@ -271,29 +305,29 @@ Deno.test("createHomeworkIssue makes correct api call", async () => {
     web_url: "",
   };
 
-  await withMockedFetch((input, init) => {
-    assertEquals(
-      input,
-      `${Gitlab.BASE_URL}/projects/projectId/issues`,
-    );
-    assertEquals(init?.method, "POST");
-    assertEquals(
-      init?.body,
-      JSON.stringify({
-        title: "title",
-        description: gitlabIssueTemplate(issueTemplateValues),
-        assignee_ids: "gitlabUserId",
-        due_date: "2020-01-01",
-      }),
-    );
-    return new Response(JSON.stringify(issue));
-  }, async () => {
-    const response = await gitlab().createHomeworkIssue(
-      "projectId",
-      "gitlabUserId",
-      new Date("2020-01-01"),
-      issueTemplateValues,
-    );
-    assertEquals(response, issue);
-  });
+  await withMockedFetch(
+    (input, init) => {
+      assertEquals(input, `${Gitlab.BASE_URL}/projects/projectId/issues`);
+      assertEquals(init?.method, "POST");
+      assertEquals(
+        init?.body,
+        JSON.stringify({
+          title: "title",
+          description: gitlabIssueTemplate(issueTemplateValues),
+          assignee_ids: "gitlabUserId",
+          due_date: "2020-01-01",
+        }),
+      );
+      return new Response(JSON.stringify(issue));
+    },
+    async () => {
+      const response = await gitlab().createHomeworkIssue(
+        "projectId",
+        "gitlabUserId",
+        new Date("2020-01-01"),
+        issueTemplateValues,
+      );
+      assertEquals(response, issue);
+    },
+  );
 });
