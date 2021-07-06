@@ -1,5 +1,9 @@
-import { assertEquals } from "https://deno.land/std@0.100.0/testing/asserts.ts";
-import { stub } from "https://deno.land/x/mock@v0.9.5/stub.ts";
+import {
+  assert,
+  assertEquals,
+  assertThrowsAsync,
+} from "https://deno.land/std@0.100.0/testing/asserts.ts";
+import { Stub, stub } from "https://deno.land/x/mock@v0.9.5/mod.ts";
 import {
   Candidate,
   CandidateField,
@@ -324,6 +328,38 @@ Deno.test(
   },
 );
 
+Deno.test(
+  "updateProfileFieldSingleLine adds a new line and uses the correct URL and HTTP method when no fields are provided",
+  () => {
+    const mockedCandidate = mockCandidate();
+    const candidateId = mockedCandidate.id;
+    const mockedCandidateSingleLineField = mockCandidateSingleLineField(
+      123,
+      [],
+    );
+    const content = ["Swapgate"];
+
+    withMockedFetch(
+      (input, init) => {
+        assertEquals(
+          input,
+          `${Recruitee.BASE_URL}/companyId/custom_fields/candidates/${candidateId}/fields/${mockedCandidateSingleLineField.id}`,
+        );
+        assertEquals(init?.method, "PATCH");
+        return new Response();
+      },
+      async () => {
+        const r = recruitee();
+        await r.updateProfileFieldSingleLine(
+          mockedCandidate,
+          mockedCandidateSingleLineField,
+          content,
+        );
+      },
+    );
+  },
+);
+
 Deno.test("clearProfileField uses the correct URL and HTTP method", () => {
   const mockedCandidate = mockCandidate();
   const candidateId = mockedCandidate.id;
@@ -341,6 +377,32 @@ Deno.test("clearProfileField uses the correct URL and HTTP method", () => {
     async () => {
       const r = recruitee();
       await r.clearProfileField(mockedCandidate, mockedCandidateField);
+    },
+  );
+});
+
+Deno.test("clearProfileField throws an exception when no candidate field with a valid id was provided", () => {
+  const mockedCandidate = mockCandidate();
+  const candidateId = mockedCandidate.id;
+  const mockedCandidateField = mockCandidateField(undefined);
+  console.log(mockedCandidateField);
+
+  withMockedFetch(
+    (input, init) => {
+      assertEquals(
+        input,
+        `${Recruitee.BASE_URL}/companyId/custom_fields/candidates/${candidateId}/fields/${mockedCandidateField.id}`,
+      );
+      assertEquals(init?.method, "DELETE");
+      return new Response();
+    },
+    async () => {
+      await assertThrowsAsync(async () => {
+        await recruitee().clearProfileField(
+          mockedCandidate,
+          mockedCandidateField,
+        );
+      });
     },
   );
 });
@@ -448,6 +510,56 @@ Deno.test(
   },
 );
 
+Deno.test(
+  "getProfileFieldByName returns the correct CandidateField",
+  () => {
+    const fieldName = "bar";
+    const candidate = mockCandidate();
+    candidate.fields = [
+      {
+        name: "foo",
+        id: 123,
+        kind: "boolean",
+      },
+      {
+        name: fieldName,
+        id: 345,
+        kind: "boolean",
+      },
+    ];
+    const candidateField = recruitee().getProfileFieldByName(
+      candidate,
+      fieldName,
+    );
+    assertEquals(candidateField?.id, 345);
+  },
+);
+
+Deno.test(
+  "getProfileFieldByName returns undefined when no field with the appropriate fieldName exists",
+  () => {
+    const fieldName = "baz";
+    const candidate = mockCandidate();
+    candidate.fields = [
+      {
+        name: "foo",
+        id: 123,
+        kind: "boolean",
+      },
+      {
+        name: "bar",
+        id: 345,
+        kind: "boolean",
+      },
+    ];
+    const candidateField = recruitee().getProfileFieldByName(
+      candidate,
+      fieldName,
+    );
+    assertEquals(candidateField, undefined);
+  },
+);
+
 Deno.test("getStagesByName returns correct stages", () => {
   const stageName = "Homework sent";
   const offerId = 13212;
@@ -501,6 +613,47 @@ Deno.test("getStagesByName returns correct stages", () => {
     },
   );
 });
+
+Deno.test(
+  "getAllQualifiedCandidates returns a list of qualified candidates",
+  async () => {
+    const minimalCandidates = [{ id: 123 }, { id: 345 }, { id: 567 }];
+    const expectedCandidates = minimalCandidates.map((item) =>
+      mockCandidate(item.id)
+    );
+    const recruiteeInstance = recruitee();
+    const getOffersWithTagStub: Stub<Recruitee> = stub(
+      recruiteeInstance,
+      "getOffersWithTag",
+      [[mockOffer(123)]],
+    );
+    const getAllCandidatesForOffersStub: Stub<Recruitee> = stub(
+      recruiteeInstance,
+      "getAllCandidatesForOffers",
+      [minimalCandidates],
+    );
+    const getCandidateByIdStub: Stub<Recruitee> = stub(
+      recruiteeInstance,
+      "getCandidateById",
+      (id) => mockCandidate(id),
+    );
+
+    const candidates = await recruiteeInstance.getAllQualifiedCandidates();
+    assertEquals(candidates, expectedCandidates);
+    assert(
+      getOffersWithTagStub.calls.length == 1,
+      "getOffersWithTag has not been called",
+    );
+    assert(
+      getAllCandidatesForOffersStub.calls.length == 1,
+      "getAllCandidatesForOffersStub has not been called",
+    );
+    assert(
+      getCandidateByIdStub.calls.length == minimalCandidates.length,
+      "getCandidateByIdStub has not been called",
+    );
+  },
+);
 
 function mockAssignee(firstName: string): CandidateReference {
   return {
