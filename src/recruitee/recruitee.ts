@@ -274,14 +274,6 @@ export default class Recruitee extends HttpClient {
     return matchedStages;
   }
 
-  getFieldByName(candidate: Candidate, fieldName: string): CandidateField {
-    const fieldsWithName = candidate.fields.filter(
-      (field) => field.name == fieldName,
-    );
-
-    return fieldsWithName[0];
-  }
-
   public async getAllQualifiedCandidates(): Promise<Candidate[]> {
     const offers = await this.getOffersWithTag(OFFER_BOT_TAG);
 
