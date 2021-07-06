@@ -38,7 +38,7 @@ export default class Recruitee extends HttpClient {
     super(`${Recruitee.BASE_URL}/${companyId}`, apiToken);
   }
 
-  private async getOffersWithTag(tag: string): Promise<Offer[]> {
+  async getOffersWithTag(tag: string): Promise<Offer[]> {
     const allOffers = await this.makeRequest<{ offers: Offer[] }>(`/offers`);
 
     return allOffers.offers.filter((offer: Offer) => {
@@ -69,7 +69,7 @@ export default class Recruitee extends HttpClient {
     return response;
   }
 
-  async getCandidateWithDetails(candidateId: number): Promise<Candidate> {
+  async getCandidateById(candidateId: number): Promise<Candidate> {
     const candidateDetails = await this.makeRequest<CandidateDetails>(
       `/candidates/${candidateId}`,
     );
@@ -127,7 +127,7 @@ export default class Recruitee extends HttpClient {
     candidate_email: string,
     subject: string, // TODO: extract subject into Mail-templates
     sendHomeworkTemplateValues: SendHomeworkTemplateValues,
-  ): Promise<unknown> {
+  ): Promise<void> {
     const homeworkMailContent = sendHomeworkTemplate(
       sendHomeworkTemplateValues,
     );
@@ -144,7 +144,7 @@ export default class Recruitee extends HttpClient {
       ],
     };
 
-    return await this.makeRequest(`/mailbox/send`, {
+    await this.makeRequest(`/mailbox/send`, {
       method: "POST",
       body: body,
     });
@@ -166,9 +166,8 @@ export default class Recruitee extends HttpClient {
     }
 
     const body = { field: field };
-    const fieldExists = field.id !== null;
 
-    if (fieldExists) {
+    if (field.id !== null) {
       await this.makeRequest(
         `/custom_fields/candidates/${candidate.id.toString()}/fields/${field.id.toString()}`,
         { method: "PATCH", body },
@@ -188,10 +187,12 @@ export default class Recruitee extends HttpClient {
     console.log(
       `[Recruitee] Clearing profile field '${field.name}' for candidate ${candidate.id}`,
     );
-    await this.makeRequest(
-      `/custom_fields/candidates/${candidate.id.toString()}/fields/${field.id.toString()}`,
-      { method: "DELETE" },
-    );
+    if (field.id !== null) {
+      await this.makeRequest(
+        `/custom_fields/candidates/${candidate.id.toString()}/fields/${field.id.toString()}`,
+        { method: "DELETE" },
+      );
+    }
   }
 
   getSignature(candidate: Candidate, references: CandidateReference[]): string {
@@ -285,7 +286,7 @@ export default class Recruitee extends HttpClient {
     const candidates = await this.getAllCandidatesForOffers(offers);
 
     return await Promise.all(
-      candidates.map((candidate) => this.getCandidateWithDetails(candidate.id)),
+      candidates.map((candidate) => this.getCandidateById(candidate.id)),
     );
   }
 
@@ -300,7 +301,7 @@ export default class Recruitee extends HttpClient {
 
   private buildSignatureFromNames(names: string[]): string {
     if (names.length > 1) {
-      const sorted = names.slice().sort();
+      const sorted = names.sort();
       const last = sorted.pop();
       const remaining = sorted.join(", ");
 
