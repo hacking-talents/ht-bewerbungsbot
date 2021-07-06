@@ -354,11 +354,6 @@ Deno.test("getUser makes correct api call", async () => {
 Deno.test(
   "getUser with given username does not exist returns undefined",
   async () => {
-    const user1: User = {
-      id: 1234,
-      username: "username1",
-      name: "",
-    };
     await withMockedFetch(
       (input, init) => {
         assertEquals(input, `${Gitlab.BASE_URL}/users?username=Username2`);
