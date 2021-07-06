@@ -203,6 +203,37 @@ Deno.test(
   },
 );
 
+Deno.test("forkHomework forks a project, but unprotect fails", async () => {
+  const gitlabInstance = gitlab();
+  const mockProject = {
+    id: "projectId",
+    name: "repoName",
+    web_url: "",
+  };
+  const forkProjectStub: Stub<Gitlab> = stub(gitlabInstance, "forkProject", [
+    mockProject,
+  ]);
+  const waitForForkFinishStub: Stub<Gitlab> = stub(
+    gitlabInstance,
+    "waitForForkFinish",
+  );
+  const unprotectAllBranchesStub: Stub<Gitlab> = stub(
+    gitlabInstance,
+    "unprotectAllBranches",
+    () => {
+      throw new Error();
+    },
+  );
+
+  await assertThrowsAsync(
+    async () => await gitlabInstance.forkHomework("projectId", "repoName"),
+  );
+
+  assertEquals(1, waitForForkFinishStub.calls.length);
+  assertEquals(1, forkProjectStub.calls.length);
+  assertEquals(1, unprotectAllBranchesStub.calls.length);
+});
+
 Deno.test("forkHomework forks a project but forkProject fails", async () => {
   const gitlabInstance = gitlab();
   const waitForForkFinishStub: Stub<Gitlab> = stub(
@@ -252,6 +283,37 @@ Deno.test("unprotectBranch makes correct api call", async () => {
   );
 });
 
+Deno.test(
+  "unprotectAllBranches calls getBranches and unprotectBranches",
+  async () => {
+    const gitlabInstance = gitlab();
+    const testProject: GitlabProject = {
+      name: "test-project",
+      id: "4122",
+      web_url: "www.testurl.de",
+    };
+    const testBranch: Branch[] = [
+      {
+        name: "test-branch",
+        protected: true,
+        default: true,
+      },
+    ];
+    const getBranchesStub: Stub<Gitlab> = stub(gitlabInstance, "getBranches", [
+      testBranch,
+    ]);
+    const unprotectBranchStub: Stub<Gitlab> = stub(
+      gitlabInstance,
+      "unprotectBranch",
+    );
+
+    await gitlabInstance.unprotectAllBranches(testProject);
+
+    assertEquals(1, getBranchesStub.calls.length);
+    assertEquals(1, unprotectBranchStub.calls.length);
+  },
+);
+
 Deno.test("deleteProject makes correct api call", async () => {
   await withMockedFetch(
     (input, init) => {
@@ -285,6 +347,52 @@ Deno.test("getUser makes correct api call", async () => {
     async () => {
       const response = await gitlab().getUser("Username2");
       assertEquals(response, user2);
+    },
+  );
+});
+
+Deno.test(
+  "getUser with given username does not exist returns undefined",
+  async () => {
+    const user1: User = {
+      id: 1234,
+      username: "username1",
+      name: "",
+    };
+    await withMockedFetch(
+      (input, init) => {
+        assertEquals(input, `${Gitlab.BASE_URL}/users?username=Username2`);
+        assertEquals(init?.method, "GET");
+        return new Response(JSON.stringify([user1]));
+      },
+      async () => {
+        const response = await gitlab().getUser("Username2");
+        assertEquals(response, undefined);
+      },
+    );
+  },
+);
+
+Deno.test("getUser there are two users with the same name, but returns only the first", async () => {
+  const user1: User = {
+    id: 1234,
+    username: "username1",
+    name: "",
+  };
+  const user2: User = {
+    id: 1235,
+    username: "username1",
+    name: "",
+  };
+  await withMockedFetch(
+    (input, init) => {
+      assertEquals(input, `${Gitlab.BASE_URL}/users?username=Username1`);
+      assertEquals(init?.method, "GET");
+      return new Response(JSON.stringify([user1, user2]));
+    },
+    async () => {
+      const response = await gitlab().getUser("Username1");
+      assertEquals(response, user1);
     },
   );
 });
