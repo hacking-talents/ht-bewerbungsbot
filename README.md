@@ -60,7 +60,14 @@ sudo docker build -t ht-bewerbungsbot .
 
 ## 🌈 Contributing
 
-- **Use `deno fmt` for formatting instead of the default prettier formatting**
+- Install the git-hooks by running the following git command:
+
+```bash
+git config --local core.hooksPath .githooks
+```
+
+- Use `deno fmt` for formatting instead of the default prettier formatting
+  _(this is automatically ensured by installing the pre-commit hook)_
 - Use the tag `--tag=Bot-Test` to prevent modifying real candidates during
   development. You have to make sure though, that a test candidate with the
   relevant tag exists.
