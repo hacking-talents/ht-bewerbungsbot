@@ -12,6 +12,7 @@ import {
 } from "./../messages.ts";
 import Gitlab from "./gitlab.ts";
 import { Branch, GitlabProject, ImportStatus, Issue, User } from "./types.ts";
+import { GitLabError } from "./errors.ts";
 
 const gitlab = () =>
   new Gitlab("gitlabToken", "templateNamespace", "homeworkNamespace");
@@ -354,15 +355,24 @@ Deno.test("getUser makes correct api call", async () => {
 Deno.test(
   "getUser with given username does not exist returns undefined",
   async () => {
+    const notExistingUser = "IDontExist";
     await withMockedFetch(
       (input, init) => {
-        assertEquals(input, `${Gitlab.BASE_URL}/users?username=Username2`);
+        assertEquals(
+          input,
+          `${Gitlab.BASE_URL}/users?username=${notExistingUser}`,
+        );
         assertEquals(init?.method, "GET");
         return new Response(JSON.stringify([]));
       },
       async () => {
-        const response = await gitlab().getUser("Username2");
-        assertEquals(response, undefined);
+        await assertThrowsAsync(
+          async () => {
+            return await gitlab().getUser(notExistingUser);
+          },
+          GitLabError,
+          `🤔 Cannot find user with username: ${notExistingUser}`,
+        );
       },
     );
   },
