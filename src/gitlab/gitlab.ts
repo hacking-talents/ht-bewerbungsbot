@@ -8,7 +8,7 @@ import {
 } from "./types.ts";
 import HttpClient from "../http/http.ts";
 import { dateToISO } from "../tools.ts";
-import { GitLabError } from "./errors.ts";
+import { GitlabError } from "./GitlabError.ts";
 
 export default class Gitlab extends HttpClient {
   public static BASE_URL = "https://gitlab.com/api/v4";
@@ -161,14 +161,13 @@ export default class Gitlab extends HttpClient {
       queryParams: { username },
     });
 
-    if (users.length == 0) {
-      console.warn(`[Gitlab] Cannot find user with username ${username}`);
-      throw new GitLabError(`🤔 Cannot find user with username: ${username}`);
-    }
-
     const user = users.find(
       (user) => user.username.toLowerCase() === username.toLowerCase(),
     );
+
+    if (!user) {
+      throw new GitlabError(`🤔 Cannot find user with username: ${username}`);
+    }
 
     console.log(`[Gitlab] Found User ${user?.username} with id ${user?.id}`);
 

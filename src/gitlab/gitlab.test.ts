@@ -12,7 +12,7 @@ import {
 } from "./../messages.ts";
 import Gitlab from "./gitlab.ts";
 import { Branch, GitlabProject, ImportStatus, Issue, User } from "./types.ts";
-import { GitLabError } from "./errors.ts";
+import { GitlabError } from "./GitlabError.ts";
 
 const gitlab = () =>
   new Gitlab("gitlabToken", "templateNamespace", "homeworkNamespace");
@@ -248,8 +248,8 @@ Deno.test("forkHomework forks a project but forkProject fails", async () => {
   const forkProjectStub: Stub<Gitlab> = stub(gitlabInstance, "forkProject", [
     undefined,
   ]);
-  await assertThrowsAsync(async () =>
-    await gitlabInstance.forkHomework("projectId", "repoName")
+  await assertThrowsAsync(
+    async () => await gitlabInstance.forkHomework("projectId", "repoName"),
   );
   assert(
     waitForForkFinishStub.calls.length == 0,
@@ -370,7 +370,7 @@ Deno.test(
           async () => {
             return await gitlab().getUser(notExistingUser);
           },
-          GitLabError,
+          GitlabError,
           `🤔 Cannot find user with username: ${notExistingUser}`,
         );
       },
@@ -378,29 +378,32 @@ Deno.test(
   },
 );
 
-Deno.test("getUser there are two users with the same name, but returns only the first", async () => {
-  const user1: User = {
-    id: 1234,
-    username: "username1",
-    name: "",
-  };
-  const user2: User = {
-    id: 1235,
-    username: "username1",
-    name: "",
-  };
-  await withMockedFetch(
-    (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/users?username=Username1`);
-      assertEquals(init?.method, "GET");
-      return new Response(JSON.stringify([user1, user2]));
-    },
-    async () => {
-      const response = await gitlab().getUser("Username1");
-      assertEquals(response, user1);
-    },
-  );
-});
+Deno.test(
+  "getUser there are two users with the same name, but returns only the first",
+  async () => {
+    const user1: User = {
+      id: 1234,
+      username: "username1",
+      name: "",
+    };
+    const user2: User = {
+      id: 1235,
+      username: "username1",
+      name: "",
+    };
+    await withMockedFetch(
+      (input, init) => {
+        assertEquals(input, `${Gitlab.BASE_URL}/users?username=Username1`);
+        assertEquals(init?.method, "GET");
+        return new Response(JSON.stringify([user1, user2]));
+      },
+      async () => {
+        const response = await gitlab().getUser("Username1");
+        assertEquals(response, user1);
+      },
+    );
+  },
+);
 
 Deno.test("createHomeworkIssue makes correct api call", async () => {
   const issueTemplateValues: GitlabIssueTemplateValues = {
