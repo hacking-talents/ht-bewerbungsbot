@@ -1,9 +1,12 @@
+import { HttpError } from "./../http/HttpError.ts";
+import { GitlabError } from "./../gitlab/GitlabError.ts";
 import Gitlab from "../gitlab/gitlab.ts";
 import { GitlabProject, Issue, User as GitlabUser } from "../gitlab/types.ts";
 import Recruitee from "../recruitee/recruitee.ts";
 import { Candidate, CandidateReference, Task } from "../recruitee/types.ts";
 import { addDaysToDate } from "../tools.ts";
 import { isDropdownField, isSingleLineField } from "./../recruitee/tools.ts";
+import { EmojiErrorcodes } from "../errormojis.ts";
 
 const HOMEWORK_TASK_TITLE = "hausaufgabe";
 const HOMEWORK_FIELD_NAME = "Hausaufgabe";
@@ -37,13 +40,41 @@ export default class Bot {
     const candidates = await this.recruitee.getAllQualifiedCandidates();
 
     await Promise.all(
-      candidates.map((c) =>
-        this.sendHomeworkForCandidate(c).catch((error) => {
-          this.recruitee.addNoteToCandidate(c.id, `error: ${error.message}`);
-          console.warn(error);
+      candidates.map((candidate) =>
+        this.sendHomeworkForCandidate(candidate).catch((error) => {
+          switch (error) {
+            case error instanceof GitlabError:
+              this.notifyAboutError(candidate, error.message);
+              break;
+
+            case error instanceof HttpError:
+              this.notifyAboutError(
+                candidate,
+                `${EmojiErrorcodes.UNEXPECTED_HTTP} Unerwarteter HTTP-Fehler mit Code ${error.statusCode}`,
+                `Unexpected HTTP-Error with code ${error.statusCode}: ${error.body}`,
+              );
+              break;
+
+            default:
+              this.notifyAboutError(
+                candidate,
+                `${EmojiErrorcodes.UNEXPECTED} Unerwarteter Fehler. Bitte in die Logs schauen.`,
+                error,
+              );
+              break;
+          }
         })
       ),
     );
+  }
+
+  private async notifyAboutError(
+    candidate: Candidate,
+    message: string,
+    extendedMessage?: string,
+  ) {
+    await this.recruitee.addNoteToCandidate(candidate.id, message);
+    console.warn(extendedMessage || message);
   }
 
   private async sendHomeworkForCandidate(candidate: Candidate) {
@@ -90,6 +121,7 @@ export default class Bot {
     }
 
     const gitlabUser = await this.gitlab.getUser(gitlabUsername);
+
     if (!gitlabUser) {
       await this.recruitee.addNoteToCandidate(
         candidate.id,
