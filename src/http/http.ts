@@ -1,4 +1,5 @@
 import { HttpRequestOptions } from "./../types.ts";
+import { HttpError } from "./HttpError.ts";
 
 export default class HttpClient {
   private baseUrl: string;
@@ -28,14 +29,16 @@ export default class HttpClient {
     });
 
     if (!response.ok) {
-      console.warn(
-        `[HttpClient] Network request failed with status ${response.status} ${response.statusText}`,
-      );
-      console.warn(`[HttpClient] ${options?.method || "GET"} URL: ${url}`);
-      console.warn(`[HttpClient] response: ${await response.text()}`);
-      throw new Error(
-        `unexpected status code ${response.status} ${response.statusText}`,
-      );
+      let body;
+      if (response.body) {
+        if (response.headers.get("Content-Type") === "application/json") {
+          body = response.json();
+        } else {
+          body = response.text();
+        }
+      }
+
+      throw new HttpError(response.status, body);
     }
 
     return response.body ? response.json() : undefined;

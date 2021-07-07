@@ -3,6 +3,7 @@ import {
   assertThrowsAsync,
 } from "https://deno.land/std@0.100.0/testing/asserts.ts";
 import HttpClient from "./http.ts";
+import { HttpError } from "./HttpError.ts";
 
 export async function withMockedFetch(
   mockedFetch: (input: Request | URL | string, init?: RequestInit) => Response,
@@ -46,8 +47,8 @@ Deno.test("http client throws error on unexpected status code", async () => {
       const httpClient = new HttpClient("baseUrl", "token");
       await assertThrowsAsync(
         () => httpClient.makeRequest<{ state: string }>("/"),
-        Error,
-        "unexpected status code 400",
+        HttpError,
+        `HTTP request failed with status code 400: {}`,
       );
     },
   );
