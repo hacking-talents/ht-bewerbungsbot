@@ -254,7 +254,7 @@ export default class Recruitee extends HttpClient {
 
     const queryParams = {
       // deno-lint-ignore camelcase
-      stage_id: proceedStage.id,
+      stage_id: proceedStage.id.toString(),
       proceed: "true",
     };
 

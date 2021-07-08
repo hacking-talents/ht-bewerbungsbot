@@ -1,4 +1,5 @@
 export type Offer = {
+  title: string;
   id: number;
   // deno-lint-ignore camelcase
   offer_tags: string[];
@@ -88,6 +89,6 @@ export type PipelineTemplate = {
 };
 
 export type StageDetail = {
-  id: string;
+  id: number;
   name: string;
 };

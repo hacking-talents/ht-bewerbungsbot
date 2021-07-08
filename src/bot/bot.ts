@@ -11,7 +11,7 @@ import { RecruiteeError } from "../recruitee/RecruiteeError.ts";
 
 const HOMEWORK_TASK_TITLE = "hausaufgabe";
 const ERROR_TASK_TITLE = "Fehler fixen";
-
+const HOMEWORK_SENT_STAGE_TITLE = "Hausaufgabe versendet";
 const HOMEWORK_FIELD_NAME = "Hausaufgabe";
 const GITLAB_USERNAME_FIELD_NAME = "GitLab Account";
 const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
@@ -36,48 +36,76 @@ export default class Bot {
   }
 
   async poll() {
-    await this.sendAllPendingHomeworks().catch(console.warn);
-  }
-
-  private async sendAllPendingHomeworks() {
     const candidates = await this.recruitee.getAllQualifiedCandidates();
 
+    await this.sendAllPendingHomeworks(candidates).catch(console.warn);
+    await this.checkForClosedIssues(candidates).catch(console.warn);
+  }
+
+  private async handleError(error: Error, candidate: Candidate) {
+    if (error instanceof GitlabError || error instanceof RecruiteeError) {
+      await this.notifyAboutError(candidate, error.message);
+    } else if (error instanceof HttpError) {
+      await this.notifyAboutError(
+        candidate,
+        `${EmojiErrorCodes.UNEXPECTED_HTTP} Unerwarteter HTTP-Fehler mit Code ${error.statusCode}. Für mehr Infos bitte in die Logs schauen.`,
+        error,
+      );
+    } else {
+      await this.notifyAboutError(
+        candidate,
+        `${EmojiErrorCodes.UNEXPECTED} Unerwarteter Fehler. Bitte in die Logs schauen.`,
+        error,
+      );
+    }
+
+    await this.recruitee.createCandidateTask(candidate, ERROR_TASK_TITLE);
+  }
+
+  private async sendAllPendingHomeworks(candidates: Candidate[]) {
     await Promise.all(
       candidates.map((candidate) =>
-        this.sendHomeworkForCandidate(candidate).catch(async (error) => {
-          switch (error.constructor) {
-            case GitlabError:
-            case RecruiteeError:
-              await this.notifyAboutError(candidate, error.message);
-              break;
-
-            case HttpError:
-              await this.notifyAboutError(
-                candidate,
-                `${EmojiErrorCodes.UNEXPECTED_HTTP} Unerwarteter HTTP-Fehler mit Code ${error.statusCode}. Für mehr Infos bitte in die Logs schauen.`,
-                error,
-              );
-              break;
-
-            default:
-              await this.notifyAboutError(
-                candidate,
-                `${EmojiErrorCodes.UNEXPECTED} Unerwarteter Fehler. Bitte in die Logs schauen.`,
-                error,
-              );
-              break;
-          }
-
-          await this.recruitee.createCandidateTask(candidate, ERROR_TASK_TITLE);
-        })
+        this.sendHomeworkForCandidate(candidate).catch((error) =>
+          this.handleError(error, candidate)
+        )
       ),
     );
+  }
+
+  private async checkForClosedIssues(candidates: Candidate[]) {
+    const homeworkSentCandidates =
+      (await Promise.all(candidates.map(async (candidate) => {
+        for (const placement of candidate.placements) {
+          if (!placement.stage_id) continue;
+
+          const stage = await this.recruitee.getStageByName(
+            HOMEWORK_SENT_STAGE_TITLE,
+            placement.offer_id,
+          );
+          if (placement.stage_id == stage.id) {
+            return candidate;
+          }
+        }
+      }))).filter((c): c is Candidate => c !== undefined);
+
+    await Promise.all(
+      homeworkSentCandidates.map((candidate) =>
+        this.checkIfCandidateClosedIssue(candidate).catch((error) =>
+          this.handleError(error, candidate)
+        )
+      ),
+    );
+  }
+
+  // deno-lint-ignore require-await
+  private async checkIfCandidateClosedIssue(candidate: Candidate) {
+    console.log("Checking issue for", candidate.name);
   }
 
   private async notifyAboutError(
     candidate: Candidate,
     message: string,
-    extendedMessage?: string,
+    extendedMessage?: Error,
   ) {
     await this.recruitee.addNoteToCandidate(candidate.id, message);
     console.warn(extendedMessage || message);
