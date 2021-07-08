@@ -10,6 +10,8 @@ import { EmojiErrorCodes } from "../errormojis.ts";
 import { RecruiteeError } from "../recruitee/RecruiteeError.ts";
 
 const HOMEWORK_TASK_TITLE = "hausaufgabe";
+const ERROR_TASK_TITLE = "Fehler fixen";
+
 const HOMEWORK_FIELD_NAME = "Hausaufgabe";
 const GITLAB_USERNAME_FIELD_NAME = "GitLab Account";
 const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
@@ -65,6 +67,8 @@ export default class Bot {
               );
               break;
           }
+
+          await this.recruitee.createCandidateTask(candidate, ERROR_TASK_TITLE);
         })
       ),
     );
@@ -81,6 +85,13 @@ export default class Bot {
 
   private async sendHomeworkForCandidate(candidate: Candidate) {
     if (!this.candidateHasRequiredTag(candidate)) {
+      return;
+    }
+
+    if (await this.hasUnfinishedErrorTask(candidate)) {
+      console.warn(
+        `[Bot] Skipping candidate ${candidate.name} because they have an unfinished error task.`,
+      );
       return;
     }
 
@@ -316,24 +327,35 @@ export default class Bot {
   }
 
   private async getHomeworkTask(candidate: Candidate): Promise<Task | null> {
-    const tasks = await this.recruitee.getCandidateTasks(candidate.id);
-    const homeworkTasks = tasks.filter(
+    return await this.getTaskByTitle(candidate, HOMEWORK_TASK_TITLE);
+  }
+
+  private async hasUnfinishedErrorTask(candidate: Candidate): Promise<boolean> {
+    return await this.getTaskByTitle(candidate, ERROR_TASK_TITLE) !== null;
+  }
+
+  private async getTaskByTitle(
+    candidate: Candidate,
+    taskTitle: string,
+  ): Promise<Task | null> {
+    const allTasks = await this.recruitee.getCandidateTasks(candidate.id);
+    const tasks = allTasks.filter(
       (task) =>
         task.completed === false &&
-        task.title.toLowerCase() === HOMEWORK_TASK_TITLE,
+        task.title.toLowerCase() === taskTitle.toLowerCase(),
     );
 
-    if (homeworkTasks.length === 0) {
+    if (tasks.length === 0) {
       return null;
     }
 
-    if (homeworkTasks.length > 1) {
+    if (tasks.length > 1) {
       throw new RecruiteeError(
-        `⚠️ Es scheinen mehrere Aufgaben mit Titel '${HOMEWORK_TASK_TITLE}' vorhanden zu sein, bitte eines davon löschen.`,
+        `⚠️ Es scheinen mehrere Aufgaben mit Titel '${taskTitle}' vorhanden zu sein, bitte eines davon löschen.`,
       );
     }
 
-    return homeworkTasks[0];
+    return tasks[0];
   }
 
   private candidateHasRequiredTag(candidate: Candidate): boolean {

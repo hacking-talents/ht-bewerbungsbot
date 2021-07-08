@@ -69,6 +69,22 @@ export default class Recruitee extends HttpClient {
     return response;
   }
 
+  async createCandidateTask(
+    candidate: Candidate,
+    title: string,
+  ): Promise<TaskDetails> {
+    const body = {
+      task: {
+        title,
+        candidate_id: candidate.id,
+      },
+    };
+    return await this.makeRequest<TaskDetails>(`/tasks/`, {
+      method: "POST",
+      body,
+    });
+  }
+
   async getCandidateById(candidateId: number): Promise<Candidate> {
     const candidateDetails = await this.makeRequest<CandidateDetails>(
       `/candidates/${candidateId}`,
