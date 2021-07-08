@@ -30,9 +30,9 @@ function recruitee() {
 
 Deno.test("getOffersWithTag returns correct offers", () => {
   const offers: Offer[] = [
-    mockOffer(123, ["testTag", "Facility-Manager", "Human-Ressource"]),
-    mockOffer(345, ["testTag", "Facility-Manager", "Human-Ressource"]),
-    mockOffer(567, ["testTag", "Hotdog-Trader"]),
+    mockOffer(123, "1", ["testTag", "Facility-Manager", "Human-Ressource"]),
+    mockOffer(345, "2", ["testTag", "Facility-Manager", "Human-Ressource"]),
+    mockOffer(567, "3", ["testTag", "Hotdog-Trader"]),
   ];
 
   withMockedFetch(
@@ -81,7 +81,7 @@ Deno.test("getAllCandidatesForOffers makes correct api call", () => {
     },
     async () => {
       const r = recruitee();
-      const offers: Offer[] = [mockOffer(123), mockOffer(1234)];
+      const offers: Offer[] = [mockOffer(123, "1"), mockOffer(1234, "2")];
       const response = await r.getAllCandidatesForOffers(offers);
 
       assertEquals(response, candidates);
@@ -568,24 +568,27 @@ Deno.test("getStageByName returns correct stages", () => {
   const mockedOffers = [
     mockOffer(
       offerId,
+      "1",
       ["Fachinformatiker"],
       [
-        { id: "5", name: stageName },
-        { id: "7", name: "Invited to interview" },
-        { id: "8", name: "Quatsch" },
+        { id: 5, name: stageName },
+        { id: 7, name: "Invited to interview" },
+        { id: 8, name: "Quatsch" },
       ],
     ),
     mockOffer(
       70973,
+      "2",
       ["Fachinformatiker"],
-      [{ id: "7", name: "Invited to interview" }],
+      [{ id: 7, name: "Invited to interview" }],
     ),
     mockOffer(
       546345734,
+      "3",
       ["Fachinformatiker"],
       [
-        { id: "5", name: stageName },
-        { id: "7", name: "Invited to interview" },
+        { id: 5, name: stageName },
+        { id: 7, name: "Invited to interview" },
       ],
     ),
   ];
@@ -606,7 +609,7 @@ Deno.test("getStageByName returns correct stages", () => {
     async () => {
       const r = recruitee();
       const actual = await r.getStageByName(stageName, offerId);
-      assertEquals(actual, { id: "5", name: "Homework sent" });
+      assertEquals(actual, { id: 5, name: "Homework sent" });
     },
   );
 });
@@ -622,7 +625,7 @@ Deno.test(
     const getOffersWithTagStub: Stub<Recruitee> = stub(
       recruiteeInstance,
       "getOffersWithTag",
-      [[mockOffer(123)]],
+      [[mockOffer(123, "1")]],
     );
     const getAllCandidatesForOffersStub: Stub<Recruitee> = stub(
       recruiteeInstance,
@@ -682,11 +685,13 @@ function mockPlacement(id: number): Placement {
 
 function mockOffer(
   id: number,
+  title: string,
   tags: string[] = [],
   stages: StageDetail[] = [],
 ): Offer {
   return {
     id,
+    title,
     offer_tags: tags,
     pipeline_template: {
       stages: stages,
