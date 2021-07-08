@@ -32,9 +32,9 @@ export default class HttpClient {
       let body;
       if (response.body) {
         if (response.headers.get("Content-Type") === "application/json") {
-          body = response.json();
+          body = await response.json();
         } else {
-          body = response.text();
+          body = await response.text();
         }
       }
 

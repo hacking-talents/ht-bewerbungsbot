@@ -52,8 +52,8 @@ export default class Bot {
             case HttpError:
               await this.notifyAboutError(
                 candidate,
-                `${EmojiErrorCodes.UNEXPECTED_HTTP} Unerwarteter HTTP-Fehler mit Code ${error.statusCode}`,
-                `Unexpected HTTP-Error with code ${error.statusCode}: ${error.body}`,
+                `${EmojiErrorCodes.UNEXPECTED_HTTP} Unerwarteter HTTP-Fehler mit Code ${error.statusCode}. Für mehr Infos bitte in die Logs schauen.`,
+                error,
               );
               break;
 
