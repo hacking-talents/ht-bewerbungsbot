@@ -16,20 +16,14 @@ import {
   Task,
   TaskDetails,
 } from "./types.ts";
+import { RecruiteeError } from "./RecruiteeError.ts";
+import { EmojiErrorCodes } from "../errormojis.ts";
 
 export const ADDRESS_FIELD_NAME = "Anrede Override";
 export const SIGNATURE_FIELD_NAME = "Unterschrift Override";
 const ADMIN_REFERENCE_TYPE = "Admin";
 export const DEFAULT_SIGNATURE = "Deine Hacking Talents";
 const OFFER_BOT_TAG = "HT-Bot Target";
-
-class CandidateFieldHasNoIDError extends Error {
-  constructor() {
-    super(
-      "Expected Candidate Field to have an id. None given. Possibly the candidate is outdated?",
-    );
-  }
-}
 
 export default class Recruitee extends HttpClient {
   public static BASE_URL = "https://api.recruitee.com/c";
@@ -41,9 +35,15 @@ export default class Recruitee extends HttpClient {
   async getOffersWithTag(tag: string): Promise<Offer[]> {
     const allOffers = await this.makeRequest<{ offers: Offer[] }>(`/offers`);
 
-    return allOffers.offers.filter((offer: Offer) => {
+    const offers = allOffers.offers.filter((offer: Offer) => {
       return offer.offer_tags.includes(tag);
     });
+    if (offers.length === 0) {
+      throw new RecruiteeError(
+        `Keine Jobangebote mit dem Tag "${OFFER_BOT_TAG}" gefunden`,
+      );
+    }
+    return offers;
   }
 
   async getAllCandidatesForOffers(
@@ -184,7 +184,12 @@ export default class Recruitee extends HttpClient {
 
   async clearProfileField(candidate: Candidate, field: CandidateField) {
     if (field.id === undefined) {
-      throw new CandidateFieldHasNoIDError();
+      console.warn(
+        `[Recruitee] Expected Candidate Field for ${candidate.name} (${candidate.id}) to have an id, none given. Possibly the candidate is outdated?`,
+      );
+      throw new RecruiteeError(
+        `${EmojiErrorCodes.MISSING_CANDIDATE_FIELD} Kandidat:in hat nicht die erwarteten Profilfelder.`,
+      );
     }
     console.log(
       `[Recruitee] Clearing profile field '${field.name}' for candidate ${candidate.id}`,

@@ -4,4 +4,6 @@ export enum EmojiErrorCodes {
   USER_NOT_FOUND = "🤔",
   PROJECT_NOT_FOUND = "📂", // Empty folder has no projects in it
   FORK_FAILED = "🍴", // A literal fork
+  MISSING_CANDIDATE_FIELD = "🗒️",
+  PIPELINE_STAGE_NOT_FOUND = "🗃️",
 }
