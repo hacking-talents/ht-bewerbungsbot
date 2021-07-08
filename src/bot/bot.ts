@@ -7,6 +7,7 @@ import { Candidate, CandidateReference, Task } from "../recruitee/types.ts";
 import { addDaysToDate } from "../tools.ts";
 import { isDropdownField, isSingleLineField } from "./../recruitee/tools.ts";
 import { EmojiErrorCodes } from "../errormojis.ts";
+import { RecruiteeError } from "../recruitee/RecruiteeError.ts";
 
 const HOMEWORK_TASK_TITLE = "hausaufgabe";
 const HOMEWORK_FIELD_NAME = "Hausaufgabe";
@@ -44,6 +45,7 @@ export default class Bot {
         this.sendHomeworkForCandidate(candidate).catch((error) => {
           switch (error) {
             case error instanceof GitlabError:
+            case error instanceof RecruiteeError:
               this.notifyAboutError(candidate, error.message);
               break;
 
@@ -78,12 +80,12 @@ export default class Bot {
   }
 
   private async sendHomeworkForCandidate(candidate: Candidate) {
-    const homeworkTask = await this.getHomeworkTask(candidate);
-    if (!homeworkTask) {
+    if (!this.candidateHasRequiredTag(candidate)) {
       return;
     }
 
-    if (!this.candidateHasRequiredTag(candidate)) {
+    const homeworkTask = await this.getHomeworkTask(candidate);
+    if (!homeworkTask) {
       return;
     }
 
@@ -92,46 +94,15 @@ export default class Bot {
     );
 
     if (candidate.emails[0] == undefined) {
-      await this.recruitee.addNoteToCandidate(
-        candidate.id,
-        `⚠️ Keine Mailadresse gefunden. Hausaufgabe kann nicht verschickt werden.`,
-      );
       console.log(`[Bot] e-mail address could not be found. No homework sent`);
-      return;
+      throw new RecruiteeError("⚠️ Keine Mailadresse gefunden.");
     }
 
-    const homework = await this.getHomeworkToSend(candidate);
-    if (!homework) {
-      await this.recruitee.addNoteToCandidate(
-        candidate.id,
-        `⚠️ Keine Hausaufgabe ausgewählt! Hausaufgabe kann nicht verschickt werden.`,
-      );
-      console.log(`[Bot] No homework selected. Homework can not be sent`);
-      return;
-    }
+    const homework = this.getHomeworkToSend(candidate);
 
     const gitlabUsername = this.getGitlabUsername(candidate);
-    if (!gitlabUsername) {
-      await this.recruitee.addNoteToCandidate(
-        candidate.id,
-        `⚠️ Kein GitLab User angegeben! Hausaufgabe kann nicht verschickt werden.`,
-      );
-      console.log(`[Bot] No GitLab user entered. Homework can not be sent`);
-      return;
-    }
 
     const gitlabUser = await this.gitlab.getUser(gitlabUsername);
-
-    if (!gitlabUser) {
-      await this.recruitee.addNoteToCandidate(
-        candidate.id,
-        `⚠️ GitLab-user \"${gitlabUsername}\" nicht gefunden. Hausaufgabe kann nicht verschickt werden.`,
-      );
-      console.log(
-        `[Bot] GitLab User could not be found. Homework can not be sent`,
-      );
-      return;
-    }
 
     const {
       issue: gitlabIssue,
@@ -291,49 +262,54 @@ export default class Bot {
       GITLAB_REPO_FIELD_NAME,
     );
 
-    if (repoField && isSingleLineField(repoField)) {
-      await this.recruitee.updateProfileFieldSingleLine(candidate, repoField, [
-        content,
-      ]);
-    } else {
-      console.warn(
-        `[Bot] cannot find ${GITLAB_REPO_FIELD_NAME} in candidate ${candidate.id}`,
+    if (!repoField || !isSingleLineField(repoField)) {
+      throw new Error(
+        `${GITLAB_USERNAME_FIELD_NAME} field is not configured correctly. Please check the profile fields template for candidates.`,
       );
     }
+
+    await this.recruitee.updateProfileFieldSingleLine(candidate, repoField, [
+      content,
+    ]);
   }
 
-  private getGitlabUsername(candidate: Candidate): string | null {
+  private getGitlabUsername(candidate: Candidate): string {
     const gitlabUsernameField = this.recruitee.getProfileFieldByName(
       candidate,
       GITLAB_USERNAME_FIELD_NAME,
     );
 
     if (!gitlabUsernameField || !isSingleLineField(gitlabUsernameField)) {
-      return null;
+      throw new Error(
+        `${GITLAB_USERNAME_FIELD_NAME} field is not configured correctly. Please check the profile fields template for candidates.`,
+      );
     }
 
     if (!gitlabUsernameField.values.length) {
-      return null;
+      throw new RecruiteeError(
+        `${EmojiErrorCodes.MISSING_CANDIDATE_FIELD} Es wurde kein Gitlab-Benutzername angegeben.`,
+      );
     }
 
     return gitlabUsernameField.values[0].text.replace(/\s+/g, "");
   }
 
-  private getHomeworkToSend(candidate: Candidate): string | null {
+  private getHomeworkToSend(candidate: Candidate): string {
     const homeworkField = this.recruitee.getProfileFieldByName(
       candidate,
       HOMEWORK_FIELD_NAME,
     );
 
     if (!homeworkField || !isDropdownField(homeworkField)) {
-      console.warn(
-        `[Bot] ${HOMEWORK_FIELD_NAME} field exists, but is not of type 'dropdown' for candidate ${candidate.id}`,
+      throw new Error(
+        `${HOMEWORK_FIELD_NAME} field exists, but is not of type 'dropdown'. Please check the profile fields template for candidates.`,
       );
-      return null;
     }
 
     if (!homeworkField.values.length) {
-      return null;
+      throw new RecruiteeError(
+        `${EmojiErrorCodes.MISSING_CANDIDATE_FIELD} Es wurde keine Hausaufgabe ausgewählt.`,
+      );
     }
 
     return homeworkField.values[0].value;
@@ -352,11 +328,9 @@ export default class Bot {
     }
 
     if (homeworkTasks.length > 1) {
-      await this.recruitee.addNoteToCandidate(
-        candidate.id,
+      throw new RecruiteeError(
         `⚠️ Es scheinen mehrere Aufgaben mit Titel '${HOMEWORK_TASK_TITLE}' vorhanden zu sein, bitte eines davon löschen.`,
       );
-      return null;
     }
 
     return homeworkTasks[0];
