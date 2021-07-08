@@ -371,7 +371,7 @@ Deno.test(
             return await gitlab().getUser(notExistingUser);
           },
           GitlabError,
-          `🤔 Cannot find user with username: ${notExistingUser}`,
+          `GitLab-User "${notExistingUser}" nicht gefunden.`,
         );
       },
     );
