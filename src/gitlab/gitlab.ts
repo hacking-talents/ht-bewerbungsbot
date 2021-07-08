@@ -1,3 +1,4 @@
+// deno-lint-ignore-file camelcase
 import { gitlabIssueTemplate, GitlabIssueTemplateValues } from "../messages.ts";
 import {
   Branch,
@@ -46,7 +47,6 @@ export default class Gitlab extends HttpClient {
     repoName: string,
   ): Promise<GitlabProject> {
     const body = {
-      // deno-lint-ignore camelcase
       namespace_id: this.homeworkNamespace,
       name: repoName,
       path: repoName,
@@ -139,11 +139,8 @@ export default class Gitlab extends HttpClient {
   ): Promise<void> {
     const body = {
       id: projectId,
-      // deno-lint-ignore camelcase
       user_id: userId,
-      // deno-lint-ignore camelcase
       access_level: 30, // 30 = Developer
-      // deno-lint-ignore camelcase
       expires_at: dateToISO(expirationDate),
     };
     await this.makeRequest(`/projects/${projectId}/members`, {
@@ -184,9 +181,7 @@ export default class Gitlab extends HttpClient {
     const body = {
       title: gitlabIssueTemplateValues.title,
       description: issueTemplate,
-      // deno-lint-ignore camelcase
       assignee_ids: gitlabUserId,
-      // deno-lint-ignore camelcase
       due_date: dateToISO(dueDate),
     };
 
