@@ -42,15 +42,15 @@ export default class Bot {
 
     await Promise.all(
       candidates.map((candidate) =>
-        this.sendHomeworkForCandidate(candidate).catch((error) => {
-          switch (error) {
-            case error instanceof GitlabError:
-            case error instanceof RecruiteeError:
-              this.notifyAboutError(candidate, error.message);
+        this.sendHomeworkForCandidate(candidate).catch(async (error) => {
+          switch (error.constructor) {
+            case GitlabError:
+            case RecruiteeError:
+              await this.notifyAboutError(candidate, error.message);
               break;
 
-            case error instanceof HttpError:
-              this.notifyAboutError(
+            case HttpError:
+              await this.notifyAboutError(
                 candidate,
                 `${EmojiErrorCodes.UNEXPECTED_HTTP} Unerwarteter HTTP-Fehler mit Code ${error.statusCode}`,
                 `Unexpected HTTP-Error with code ${error.statusCode}: ${error.body}`,
@@ -58,7 +58,7 @@ export default class Bot {
               break;
 
             default:
-              this.notifyAboutError(
+              await this.notifyAboutError(
                 candidate,
                 `${EmojiErrorCodes.UNEXPECTED} Unerwarteter Fehler. Bitte in die Logs schauen.`,
                 error,
