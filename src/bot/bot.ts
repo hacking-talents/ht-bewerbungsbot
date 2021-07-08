@@ -6,7 +6,7 @@ import Recruitee from "../recruitee/recruitee.ts";
 import { Candidate, CandidateReference, Task } from "../recruitee/types.ts";
 import { addDaysToDate } from "../tools.ts";
 import { isDropdownField, isSingleLineField } from "./../recruitee/tools.ts";
-import { EmojiErrorcodes } from "../errormojis.ts";
+import { EmojiErrorCodes } from "../errormojis.ts";
 
 const HOMEWORK_TASK_TITLE = "hausaufgabe";
 const HOMEWORK_FIELD_NAME = "Hausaufgabe";
@@ -50,7 +50,7 @@ export default class Bot {
             case error instanceof HttpError:
               this.notifyAboutError(
                 candidate,
-                `${EmojiErrorcodes.UNEXPECTED_HTTP} Unerwarteter HTTP-Fehler mit Code ${error.statusCode}`,
+                `${EmojiErrorCodes.UNEXPECTED_HTTP} Unerwarteter HTTP-Fehler mit Code ${error.statusCode}`,
                 `Unexpected HTTP-Error with code ${error.statusCode}: ${error.body}`,
               );
               break;
@@ -58,7 +58,7 @@ export default class Bot {
             default:
               this.notifyAboutError(
                 candidate,
-                `${EmojiErrorcodes.UNEXPECTED} Unerwarteter Fehler. Bitte in die Logs schauen.`,
+                `${EmojiErrorCodes.UNEXPECTED} Unerwarteter Fehler. Bitte in die Logs schauen.`,
                 error,
               );
               break;

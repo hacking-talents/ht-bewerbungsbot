@@ -10,6 +10,7 @@ import {
 import HttpClient from "../http/http.ts";
 import { dateToISO } from "../tools.ts";
 import { GitlabError } from "./GitlabError.ts";
+import { EmojiErrorCodes } from "../errormojis.ts";
 
 export default class Gitlab extends HttpClient {
   public static BASE_URL = "https://gitlab.com/api/v4";
@@ -28,7 +29,7 @@ export default class Gitlab extends HttpClient {
     this.homeworkNamespace = homeworkNamespace;
   }
 
-  async getHomeworkProject(name: string): Promise<GitlabProject | undefined> {
+  async getHomeworkProject(name: string): Promise<GitlabProject> {
     const queryParams = {
       search: name,
     };
@@ -39,7 +40,15 @@ export default class Gitlab extends HttpClient {
       },
     );
 
-    return projects.find((p) => p.name === name);
+    const project = projects.find((p) => p.name === name);
+
+    if (!project) {
+      throw new GitlabError(
+        `${EmojiErrorCodes.PROJECT_NOT_FOUND} Die Hausaufgabe \"${name}\" konnte nicht gefunden werden.`,
+      );
+    }
+
+    return project;
   }
 
   async forkProject(
@@ -68,7 +77,9 @@ export default class Gitlab extends HttpClient {
       );
       importStatus = importStatusResponse["import_status"];
       if (importStatus === "failed" || --retryCount === 0) {
-        throw new Error(`[Gitlab] Fork import failed`);
+        throw new GitlabError(
+          `${EmojiErrorCodes.FORK_FAILED} Das Repository konnte nicht geforkt werden. Status: \"${importStatus}\"`,
+        );
       }
     }
     console.log("[Gitlab] Project successfully forked");
@@ -80,16 +91,9 @@ export default class Gitlab extends HttpClient {
   ): Promise<GitlabProject> {
     const homeworkFork = await this.forkProject(homeworkProjectId, repoName);
 
-    if (!homeworkFork) throw Error("[Gitlab] Failed to fork project.");
-
     await this.waitForForkFinish(homeworkFork.id);
 
-    try {
-      await this.unprotectAllBranches(homeworkFork);
-    } catch (e) {
-      throw e;
-    }
-    console.warn("[Gitlab] Successfully unprotected branches");
+    await this.unprotectAllBranches(homeworkFork);
 
     console.log(
       `[Gitlab] Forked Git Repo with id ${homeworkProjectId} as \"${repoName}\"`,
@@ -122,6 +126,8 @@ export default class Gitlab extends HttpClient {
         await this.unprotectBranch(project, branch);
       }),
     );
+
+    console.warn("[Gitlab] Successfully unprotected branches");
   }
 
   async deleteProject(id: string) {
@@ -153,7 +159,7 @@ export default class Gitlab extends HttpClient {
     );
   }
 
-  async getUser(username: string): Promise<User | undefined> {
+  async getUser(username: string): Promise<User> {
     const users = await this.makeRequest<User[]>("/users", {
       queryParams: { username },
     });
@@ -163,10 +169,12 @@ export default class Gitlab extends HttpClient {
     );
 
     if (!user) {
-      throw new GitlabError(`🤔 Cannot find user with username: ${username}`);
+      throw new GitlabError(
+        `${EmojiErrorCodes.USER_NOT_FOUND} GitLab-User \"${username}\" nicht gefunden. Hausaufgabe kann nicht verschickt werden.`,
+      );
     }
 
-    console.log(`[Gitlab] Found User ${user?.username} with id ${user?.id}`);
+    console.log(`[Gitlab] Found User ${user.username} with id ${user.id}`);
 
     return user;
   }
