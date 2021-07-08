@@ -492,19 +492,16 @@ Deno.test(
       (input, init) => {
         assertEquals(
           input,
-          `${Recruitee.BASE_URL}/companyId/placements/${
-            mockedCandidate.placements[0].id
+          `${Recruitee.BASE_URL}/companyId/placements/${mockedCandidate.placements[0].id
           }/change_stage?stage_id=${stageId}&proceed=true`,
         );
         assertEquals(init?.method, "PATCH");
         return new Response();
       },
       async () => {
-        const r = recruitee();
-        await stub(r, "getStagesByName", () => {
-          return [{ id: stageId }];
-        });
-        r.proceedCandidateToStage(mockedCandidate, nextStage);
+        const recruiteeInstance = recruitee();
+        stub(recruiteeInstance, "getStageByName", () => ({ id: stageId }));
+        await recruiteeInstance.proceedCandidateToStage(mockedCandidate, nextStage);
       },
     );
   },
@@ -560,7 +557,7 @@ Deno.test(
   },
 );
 
-Deno.test("getStagesByName returns correct stages", () => {
+Deno.test("getStageByName returns correct stages", () => {
   const stageName = "Homework sent";
   const offerId = 13212;
 
@@ -571,8 +568,7 @@ Deno.test("getStagesByName returns correct stages", () => {
       [
         { id: "5", name: stageName },
         { id: "7", name: "Invited to interview" },
-        { id: "435", name: stageName },
-        { id: "5", name: "Quatsch" },
+        { id: "8", name: "Quatsch" },
       ],
     ),
     mockOffer(
@@ -605,11 +601,8 @@ Deno.test("getStagesByName returns correct stages", () => {
     },
     async () => {
       const r = recruitee();
-      const actual = await r.getStagesByName(stageName, offerId);
-      assertEquals(actual, [
-        { id: "5", name: "Homework sent" },
-        { id: "435", name: "Homework sent" },
-      ]);
+      const actual = await r.getStageByName(stageName, offerId);
+      assertEquals(actual, { id: "5", name: "Homework sent" });
     },
   );
 });

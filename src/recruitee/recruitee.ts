@@ -231,15 +231,14 @@ export default class Recruitee extends HttpClient {
     stageToProceed: string,
   ): Promise<void> {
     const placement = candidate.placements[0];
-    const proceedStages = await this.getStagesByName(
+    const proceedStage = await this.getStageByName(
       stageToProceed,
-      candidate.placements[0].offer_id,
+      placement.offer_id,
     );
-    const stageId = proceedStages[0].id;
 
     const queryParams = {
       // deno-lint-ignore camelcase
-      stage_id: stageId,
+      stage_id: proceedStage.id,
       proceed: "true",
     };
 
@@ -249,10 +248,10 @@ export default class Recruitee extends HttpClient {
     });
   }
 
-  async getStagesByName(
+  async getStageByName(
     stageName: string,
     offerId: number,
-  ): Promise<StageDetail[]> {
+  ): Promise<StageDetail> {
     const queryParams = {
       scope: "not_archived",
       // deno-lint-ignore camelcase
@@ -264,19 +263,23 @@ export default class Recruitee extends HttpClient {
       queryParams,
     });
 
-    const offer = offers.filter((offer: Offer) => {
+    const offer = offers.find((offer: Offer) => {
       return offer.id == offerId;
-    })[0];
+    });
 
-    const matchedStages = offer.pipeline_template.stages.filter(
+    const matchedStage = offer?.pipeline_template.stages.find(
       (stage: StageDetail) => {
         const searchedName = stageName.replace(/ /g, "").toLowerCase();
         const givenName = stage.name.replace(/ /g, "").toLowerCase();
         return givenName.includes(searchedName);
       },
     );
-
-    return matchedStages;
+    if (!matchedStage) {
+      throw new RecruiteeError(
+        `${EmojiErrorCodes.PIPELINE_STAGE_NOT_FOUND} Pipeline-Schritt "${stageName}" nicht gefunden.`,
+      );
+    }
+    return matchedStage;
   }
 
   public async getAllQualifiedCandidates(): Promise<Candidate[]> {
