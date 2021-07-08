@@ -40,15 +40,30 @@ Deno.test("http client returns success response", async () => {
   );
 });
 
-Deno.test("http client throws error on unexpected status code", async () => {
+Deno.test("http client throws error on unexpected status code without body", async () => {
   await withMockedFetch(
-    () => new Response("", { status: 400, statusText: "Bad Request" }),
+    () => new Response(null, { status: 400, statusText: "Bad Request" }),
     async () => {
       const httpClient = new HttpClient("baseUrl", "token");
       await assertThrowsAsync(
         () => httpClient.makeRequest<{ state: string }>("/"),
         HttpError,
-        `HTTP request failed with status code 400: {}`,
+        `HTTP request failed with status code 400.`,
+      );
+    },
+  );
+});
+
+Deno.test("http client throws error on unexpected status code with body", async () => {
+  await withMockedFetch(
+    () =>
+      new Response("ResponseBody", { status: 400, statusText: "Bad Request" }),
+    async () => {
+      const httpClient = new HttpClient("baseUrl", "token");
+      await assertThrowsAsync(
+        () => httpClient.makeRequest<{ state: string }>("/"),
+        HttpError,
+        `HTTP request failed with status code 400: "ResponseBody"`,
       );
     },
   );
