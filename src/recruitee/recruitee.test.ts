@@ -492,7 +492,8 @@ Deno.test(
       (input, init) => {
         assertEquals(
           input,
-          `${Recruitee.BASE_URL}/companyId/placements/${mockedCandidate.placements[0].id
+          `${Recruitee.BASE_URL}/companyId/placements/${
+            mockedCandidate.placements[0].id
           }/change_stage?stage_id=${stageId}&proceed=true`,
         );
         assertEquals(init?.method, "PATCH");
@@ -501,7 +502,10 @@ Deno.test(
       async () => {
         const recruiteeInstance = recruitee();
         stub(recruiteeInstance, "getStageByName", () => ({ id: stageId }));
-        await recruiteeInstance.proceedCandidateToStage(mockedCandidate, nextStage);
+        await recruiteeInstance.proceedCandidateToStage(
+          mockedCandidate,
+          nextStage,
+        );
       },
     );
   },

@@ -170,7 +170,7 @@ export default class Gitlab extends HttpClient {
 
     if (!user) {
       throw new GitlabError(
-        `${EmojiErrorCodes.USER_NOT_FOUND} GitLab-User \"${username}\" nicht gefunden. Hausaufgabe kann nicht verschickt werden.`,
+        `${EmojiErrorCodes.USER_NOT_FOUND} GitLab-User \"${username}\" nicht gefunden.`,
       );
     }
 

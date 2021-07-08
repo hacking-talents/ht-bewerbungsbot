@@ -167,14 +167,14 @@ export default class Bot {
       "Hausaufgabe versendet",
     );
 
+    const localizedDueDate = dueDate.toLocaleDateString(
+      "de-DE",
+      { weekday: "long", day: "numeric", month: "long" }, // FIXME: locale Date is not correctly printed
+    );
+
     await this.recruitee.addNoteToCandidate(
       candidate.id,
-      `📤  Hausaufgabe \"${homework}\" versendet. Fällig am ${
-        dueDate.toLocaleDateString(
-          "de-DE",
-          { weekday: "long", day: "numeric", month: "long" }, // FIXME: locale Date is not correctly printed
-        )
-      }`,
+      `📤  Hausaufgabe \"${homework}\" versendet. Fällig am ${localizedDueDate}.`,
     ); // TODO: include more info in log message (in a form of a checklist)
   }
 
@@ -337,8 +337,6 @@ export default class Bot {
   }
 
   private candidateHasRequiredTag(candidate: Candidate): boolean {
-    return this.requiredTag
-      ? !!candidate.tags.includes(this.requiredTag)
-      : true;
+    return this.requiredTag ? candidate.tags.includes(this.requiredTag) : true;
   }
 }
