@@ -3,7 +3,12 @@ import { GitlabError } from "./../gitlab/GitlabError.ts";
 import Gitlab from "../gitlab/gitlab.ts";
 import { GitlabProject, Issue, User as GitlabUser } from "../gitlab/types.ts";
 import Recruitee from "../recruitee/recruitee.ts";
-import { Candidate, CandidateReference, Task } from "../recruitee/types.ts";
+import {
+  Candidate,
+  CandidateReference,
+  CandidateSingleLineField,
+  Task,
+} from "../recruitee/types.ts";
 import { addDaysToDate } from "../tools.ts";
 import { isDropdownField, isSingleLineField } from "./../recruitee/tools.ts";
 import { EmojiErrorCodes } from "../errormojis.ts";
@@ -15,6 +20,7 @@ const HOMEWORK_SENT_STAGE_TITLE = "Hausaufgabe versendet";
 const HOMEWORK_FIELD_NAME = "Hausaufgabe";
 const GITLAB_USERNAME_FIELD_NAME = "GitLab Account";
 const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
+const GITHUB_BASE_URL = "https://gitlab.com/";
 const DEFAULT_HOMEWORK_DURATION_IN_DAYS = 8;
 
 export default class Bot {
@@ -73,33 +79,71 @@ export default class Bot {
   }
 
   private async checkForClosedIssues(candidates: Candidate[]) {
-    const homeworkSentCandidates =
-      (await Promise.all(candidates.map(async (candidate) => {
-        for (const placement of candidate.placements) {
-          if (!placement.stage_id) continue;
+    const homeworkSentCandidates = (
+      await Promise.all(
+        candidates.map(async (candidate) => {
+          for (const placement of candidate.placements) {
+            if (!placement.stage_id) continue;
 
-          const stage = await this.recruitee.getStageByName(
-            HOMEWORK_SENT_STAGE_TITLE,
-            placement.offer_id,
-          );
-          if (placement.stage_id == stage.id) {
-            return candidate;
+            const stage = await this.recruitee.getStageByName(
+              HOMEWORK_SENT_STAGE_TITLE,
+              placement.offer_id,
+            );
+            if (placement.stage_id == stage.id) {
+              return candidate;
+            }
           }
-        }
-      }))).filter((c): c is Candidate => c !== undefined);
+        }),
+      )
+    ).filter((c): c is Candidate => c !== undefined);
 
     await Promise.all(
       homeworkSentCandidates.map((candidate) =>
-        this.checkIfCandidateClosedIssue(candidate).catch((error) =>
+        this.handleClosedCandidateIssues(candidate).catch((error) =>
           this.handleError(error, candidate)
         )
       ),
     );
   }
 
-  // deno-lint-ignore require-await
-  private async checkIfCandidateClosedIssue(candidate: Candidate) {
+  private async handleClosedCandidateIssues(candidate: Candidate) {
+    const project = await this.getProjectByCandidate(candidate);
+    const botGitlabUser = await this.gitlab.getOwnUserInfo();
+    const issuesByBot = await this.gitlab.getProjectIssues(
+      project.id,
+      botGitlabUser,
+    );
+
+    if (issuesByBot.length != 1) {
+      throw Error(
+        `There are ${
+          issuesByBot.length > 0 ? "multiple" : "no"
+        } issues created by the Bot in project ${project.id}`,
+      );
+    }
+
+    // TODO: if issue is closed, move to next stage
     console.log("Checking issue for", candidate.name);
+
+    // TODO: leave message, maybe message assignees?
+  }
+
+  private async getProjectByCandidate(candidate: Candidate) {
+    const projectUrlField = this.recruitee.getProfileFieldByName(
+      candidate,
+      GITLAB_USERNAME_FIELD_NAME,
+    );
+    if (projectUrlField != undefined) {
+      const projectUrl = (projectUrlField as CandidateSingleLineField).values[0]
+        .text;
+      const projectPath = projectUrl.toLowerCase().replace(GITHUB_BASE_URL, "");
+
+      return await this.gitlab.getHomeworkProject(
+        encodeURIComponent(projectPath),
+      );
+    } else {
+      throw Error("No project candidate field found");
+    }
   }
 
   private async notifyAboutError(
@@ -359,7 +403,7 @@ export default class Bot {
   }
 
   private async hasUnfinishedErrorTask(candidate: Candidate): Promise<boolean> {
-    return await this.getTaskByTitle(candidate, ERROR_TASK_TITLE) !== null;
+    return (await this.getTaskByTitle(candidate, ERROR_TASK_TITLE)) !== null;
   }
 
   private async getTaskByTitle(

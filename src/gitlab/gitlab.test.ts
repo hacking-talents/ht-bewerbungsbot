@@ -22,7 +22,7 @@ Deno.test("getHomeworkProject makes correct api call", async () => {
     (input, init) => {
       assertEquals(
         input,
-        `${Gitlab.BASE_URL}/groups/templateNamespace/projects?search=b`,
+        `${Gitlab.API_BASE_URL}/groups/templateNamespace/projects?search=b`,
       );
       assertEquals(init?.method, "GET");
       const body: GitlabProject[] = [
@@ -49,7 +49,7 @@ Deno.test("getHomeworkProject makes correct api call", async () => {
 Deno.test("waitForForkFinish makes correct api call", async () => {
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/projects/forkId/import`);
+      assertEquals(input, `${Gitlab.API_BASE_URL}/projects/forkId/import`);
       assertEquals(init?.method, "GET");
       console.log(input);
 
@@ -99,7 +99,10 @@ Deno.test("waitForForkFinish resolves", async () => {
 Deno.test("getBranches makes correct api call", async () => {
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/projects/id/repository/branches`);
+      assertEquals(
+        input,
+        `${Gitlab.API_BASE_URL}/projects/id/repository/branches`,
+      );
       assertEquals(init?.method, "GET");
       const body: Branch[] = [{ name: "main", protected: true, default: true }];
       return new Response(JSON.stringify(body));
@@ -154,7 +157,7 @@ Deno.test("forkProject makes a correct api call", async () => {
   const projectId = "projectId";
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/projects/${projectId}/fork`);
+      assertEquals(input, `${Gitlab.API_BASE_URL}/projects/${projectId}/fork`);
       assertEquals(init?.method, "POST");
       return new Response(JSON.stringify(mockProject));
     },
@@ -270,7 +273,7 @@ Deno.test("unprotectBranch makes correct api call", async () => {
     (input, init) => {
       assertEquals(
         input,
-        `${Gitlab.BASE_URL}/projects/projectId/protected_branches/branchName`,
+        `${Gitlab.API_BASE_URL}/projects/projectId/protected_branches/branchName`,
       );
       assertEquals(init?.method, "DELETE");
       return new Response();
@@ -318,7 +321,7 @@ Deno.test(
 Deno.test("deleteProject makes correct api call", async () => {
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/projects/projectId`);
+      assertEquals(input, `${Gitlab.API_BASE_URL}/projects/projectId`);
       assertEquals(init?.method, "DELETE");
       return new Response();
     },
@@ -341,7 +344,7 @@ Deno.test("getUser makes correct api call", async () => {
   };
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/users?username=Username2`);
+      assertEquals(input, `${Gitlab.API_BASE_URL}/users?username=Username2`);
       assertEquals(init?.method, "GET");
       return new Response(JSON.stringify([user1, user2]));
     },
@@ -360,7 +363,7 @@ Deno.test(
       (input, init) => {
         assertEquals(
           input,
-          `${Gitlab.BASE_URL}/users?username=${notExistingUser}`,
+          `${Gitlab.API_BASE_URL}/users?username=${notExistingUser}`,
         );
         assertEquals(init?.method, "GET");
         return new Response(JSON.stringify([]));
@@ -393,7 +396,7 @@ Deno.test(
     };
     await withMockedFetch(
       (input, init) => {
-        assertEquals(input, `${Gitlab.BASE_URL}/users?username=Username1`);
+        assertEquals(input, `${Gitlab.API_BASE_URL}/users?username=Username1`);
         assertEquals(init?.method, "GET");
         return new Response(JSON.stringify([user1, user2]));
       },
@@ -413,7 +416,7 @@ Deno.test("getOwnUserInfo makes correct api call", async () => {
   };
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/user`);
+      assertEquals(input, `${Gitlab.API_BASE_URL}/user`);
       assertEquals(init?.method, "GET");
       return new Response(JSON.stringify(ownUser));
     },
@@ -427,7 +430,7 @@ Deno.test("getOwnUserInfo makes correct api call", async () => {
 Deno.test("getOwnUserInfo gets nothing and returns Error", async () => {
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/user`);
+      assertEquals(input, `${Gitlab.API_BASE_URL}/user`);
       assertEquals(init?.method, "GET");
       return new Response(undefined);
     },
@@ -460,7 +463,7 @@ Deno.test("createHomeworkIssue makes correct api call", async () => {
 
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/projects/projectId/issues`);
+      assertEquals(input, `${Gitlab.API_BASE_URL}/projects/projectId/issues`);
       assertEquals(init?.method, "POST");
       assertEquals(
         init?.body,
@@ -518,7 +521,7 @@ Deno.test("getProjectIssues returns all issues of a project", async () => {
 
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/projects/projectId/issues`);
+      assertEquals(input, `${Gitlab.API_BASE_URL}/projects/projectId/issues`);
       assertEquals(init?.method, "GET");
       return new Response(JSON.stringify([randomIssue, homeworkIssue]));
     },
@@ -534,7 +537,7 @@ Deno.test("getProjectIssues returns all issues of a project", async () => {
 Deno.test("getProjectIssues can return no issues", async () => {
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.BASE_URL}/projects/projectId/issues`);
+      assertEquals(input, `${Gitlab.API_BASE_URL}/projects/projectId/issues`);
       assertEquals(init?.method, "GET");
       return new Response(JSON.stringify([]));
     },

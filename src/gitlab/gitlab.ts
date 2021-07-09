@@ -13,7 +13,7 @@ import { GitlabError } from "./GitlabError.ts";
 import { EmojiErrorCodes } from "../errormojis.ts";
 
 export default class Gitlab extends HttpClient {
-  public static BASE_URL = "https://gitlab.com/api/v4";
+  public static API_BASE_URL = "https://gitlab.com/api/v4";
 
   private templateNamespace: string;
   private homeworkNamespace: string;
@@ -23,7 +23,7 @@ export default class Gitlab extends HttpClient {
     templateNamespace: string,
     homeworkNamespace: string,
   ) {
-    super(Gitlab.BASE_URL, apiToken);
+    super(Gitlab.API_BASE_URL, apiToken);
 
     this.templateNamespace = templateNamespace;
     this.homeworkNamespace = homeworkNamespace;

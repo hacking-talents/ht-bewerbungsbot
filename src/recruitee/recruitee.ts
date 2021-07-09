@@ -235,7 +235,8 @@ export default class Recruitee extends HttpClient {
     );
 
     if (subscribedPersons.length > 0) {
-      const firstNames = subscribedPersons.map((person) => person.first_name)
+      const firstNames = subscribedPersons
+        .map((person) => person.first_name)
         .filter((name): name is string => !!name);
       return this.buildSignatureFromNames(firstNames);
     }
@@ -312,9 +313,7 @@ export default class Recruitee extends HttpClient {
     candidate: Candidate,
     name: string,
   ): CandidateField | undefined {
-    return candidate.fields.find(
-      (field) => field.name === name,
-    );
+    return candidate.fields.find((field) => field.name === name);
   }
 
   private buildSignatureFromNames(names: string[]): string {
