@@ -179,6 +179,17 @@ export default class Gitlab extends HttpClient {
     return user;
   }
 
+  async getOwnUserInfo(): Promise<User> {
+    const userInfo = await this.makeRequest<User>("/user");
+
+    if (!userInfo) {
+      throw new GitlabError(
+        `${EmojiErrorCodes.USER_NOT_FOUND} Eigene GitLab Profilinformationen nicht gefunden.`,
+      );
+    }
+    return userInfo;
+  }
+
   async createHomeworkIssue(
     projectId: string,
     gitlabUserId: string,

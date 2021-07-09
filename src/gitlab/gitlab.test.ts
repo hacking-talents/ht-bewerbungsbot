@@ -405,6 +405,38 @@ Deno.test(
   },
 );
 
+Deno.test("getOwnUserInfo makes correct api call", async () => {
+  const ownUser: User = {
+    id: 1234,
+    username: "bewerbungsbot",
+    name: "Bot de Bewerbung",
+  };
+  await withMockedFetch(
+    (input, init) => {
+      assertEquals(input, `${Gitlab.BASE_URL}/user`);
+      assertEquals(init?.method, "GET");
+      return new Response(JSON.stringify(ownUser));
+    },
+    async () => {
+      const response = await gitlab().getOwnUserInfo();
+      assertEquals(response, ownUser);
+    },
+  );
+});
+
+Deno.test("getOwnUserInfo gets nothing and returns Error", async () => {
+  await withMockedFetch(
+    (input, init) => {
+      assertEquals(input, `${Gitlab.BASE_URL}/user`);
+      assertEquals(init?.method, "GET");
+      return new Response(undefined);
+    },
+    async () => {
+      await assertThrowsAsync(() => gitlab().getOwnUserInfo());
+    },
+  );
+});
+
 Deno.test("createHomeworkIssue makes correct api call", async () => {
   const issueTemplateValues: GitlabIssueTemplateValues = {
     title: "title",
