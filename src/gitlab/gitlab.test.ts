@@ -445,6 +445,11 @@ Deno.test("createHomeworkIssue makes correct api call", async () => {
 
   const issue: Issue = {
     title: "title",
+    author: {
+      id: 1,
+      name: "",
+      username: "",
+    },
     assignee: {
       id: 1,
       name: "",
