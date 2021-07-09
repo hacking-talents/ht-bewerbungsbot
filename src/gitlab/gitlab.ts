@@ -218,4 +218,26 @@ export default class Gitlab extends HttpClient {
 
     return issue;
   }
+
+  async getProjectIssues(projectId: string, author?: User): Promise<Issue[]> {
+    const queryParams = author
+      ? { author_id: author.id.toString() }
+      : undefined;
+
+    const issues = await this.makeRequest<Issue[]>(
+      `/projects/${projectId}/issues`,
+      {
+        method: "GET",
+        queryParams,
+      },
+    );
+
+    console.log(
+      `[Gitlab] found ${issues.length} issues${
+        author ? " with author" + author.username : ""
+      } in project ${projectId}`,
+    );
+
+    return issues;
+  }
 }
