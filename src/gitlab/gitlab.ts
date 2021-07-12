@@ -29,26 +29,35 @@ export default class Gitlab extends HttpClient {
     this.homeworkNamespace = homeworkNamespace;
   }
 
-  async getHomeworkProject(name: string): Promise<GitlabProject> {
+  async getProject(name: string, namespaceID: string): Promise<GitlabProject> {
     const queryParams = {
       search: name,
     };
     const projects = await this.makeRequest<GitlabProject[]>(
-      `/groups/${this.templateNamespace}/projects`,
+      `/groups/${namespaceID}/projects`,
       {
         queryParams,
       },
     );
 
-    const project = projects.find((p) => p.name === name);
+    const project = projects.find((p) =>
+      p.name.toLowerCase() === name.toLowerCase()
+    );
 
     if (!project) {
       throw new GitlabError(
         `${EmojiErrorCodes.PROJECT_NOT_FOUND} Die Hausaufgabe \"${name}\" konnte nicht gefunden werden.`,
       );
     }
-
     return project;
+  }
+
+  async getTemplateProject(name: string) {
+    return await this.getProject(name, this.templateNamespace);
+  }
+
+  async getHomeworkProject(name: string) {
+    return await this.getProject(name, this.homeworkNamespace);
   }
 
   async forkProject(

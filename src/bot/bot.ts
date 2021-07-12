@@ -293,7 +293,7 @@ export default class Bot {
     homework: string,
     homeworkTask: Task,
   ): Promise<{ issue: Issue; fork: GitlabProject; dueDate: Date }> {
-    const homeworkProject = await this.gitlab.getHomeworkProject(homework);
+    const homeworkProject = await this.gitlab.getTemplateProject(homework);
     const forkName = `homework-${gitlabUser.username}-${
       Math.floor(
         Math.random() * 1000000000000,

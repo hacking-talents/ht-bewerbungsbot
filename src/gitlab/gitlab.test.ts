@@ -17,7 +17,7 @@ import { GitlabError } from "./GitlabError.ts";
 const gitlab = () =>
   new Gitlab("gitlabToken", "templateNamespace", "homeworkNamespace");
 
-Deno.test("getHomeworkProject makes correct api call", async () => {
+Deno.test("getTemplateProject makes correct api call", async () => {
   await withMockedFetch(
     (input, init) => {
       assertEquals(
@@ -40,7 +40,7 @@ Deno.test("getHomeworkProject makes correct api call", async () => {
       return new Response(JSON.stringify(body));
     },
     async () => {
-      const project = await gitlab().getHomeworkProject("b");
+      const project = await gitlab().getTemplateProject("b");
       assertEquals(project?.name, "b");
     },
   );
@@ -488,61 +488,70 @@ Deno.test("createHomeworkIssue makes correct api call", async () => {
   );
 });
 
-Deno.test("getProjectIssues returns all issues of a project", async () => {
-  const randomIssue: Issue = {
-    title: "Know something",
-    author: {
-      id: 72,
-      name: "Igritte",
-      username: "redwildling",
-    },
-    assignee: {
-      id: 13,
-      name: "Jon Snow",
-      username: "whitewolf",
-    },
-    web_url: "",
-  };
+Deno.test(
+  "getClosedProjectIssues returns all issues of a project",
+  async () => {
+    const randomIssue: Issue = {
+      title: "Know something",
+      author: {
+        id: 72,
+        name: "Igritte",
+        username: "redwildling",
+      },
+      assignee: {
+        id: 13,
+        name: "Jon Snow",
+        username: "whitewolf",
+      },
+      web_url: "",
+    };
 
-  const homeworkIssue: Issue = {
-    title: "Solve the given Task",
-    author: {
-      id: 42,
-      name: "Bewerbungsbot",
-      username: "bewerbungsbot",
-    },
-    assignee: {
-      id: 23,
-      name: "Sabine Wren",
-      username: "futuretalent",
-    },
-    web_url: "",
-  };
+    const homeworkIssue: Issue = {
+      title: "Solve the given Task",
+      author: {
+        id: 42,
+        name: "Bewerbungsbot",
+        username: "bewerbungsbot",
+      },
+      assignee: {
+        id: 23,
+        name: "Sabine Wren",
+        username: "futuretalent",
+      },
+      web_url: "",
+    };
 
+    await withMockedFetch(
+      (input, init) => {
+        assertEquals(
+          input,
+          `${Gitlab.API_BASE_URL}/projects/projectId/issues?state=closed`,
+        );
+        assertEquals(init?.method, "GET");
+        return new Response(JSON.stringify([randomIssue, homeworkIssue]));
+      },
+      async () => {
+        const response = await gitlab().getClosedProjectIssues("projectId");
+        assertEquals(response, [randomIssue, homeworkIssue]);
+      },
+    );
+  },
+);
+
+// TODO: "getClosedProjectIssues also queries for author when given"
+
+Deno.test("getClosedProjectIssues can return no issues", async () => {
   await withMockedFetch(
     (input, init) => {
-      assertEquals(input, `${Gitlab.API_BASE_URL}/projects/projectId/issues`);
-      assertEquals(init?.method, "GET");
-      return new Response(JSON.stringify([randomIssue, homeworkIssue]));
-    },
-    async () => {
-      const response = await gitlab().getProjectIssues("projectId");
-      assertEquals(response, [randomIssue, homeworkIssue]);
-    },
-  );
-});
-
-// TODO: "getProjectIssues also queries for author when given"
-
-Deno.test("getProjectIssues can return no issues", async () => {
-  await withMockedFetch(
-    (input, init) => {
-      assertEquals(input, `${Gitlab.API_BASE_URL}/projects/projectId/issues`);
+      assertEquals(
+        input,
+        `${Gitlab.API_BASE_URL}/projects/projectId/issues?state=closed`,
+      );
       assertEquals(init?.method, "GET");
       return new Response(JSON.stringify([]));
     },
     async () => {
-      const response = await gitlab().getProjectIssues("projectId");
+      const response = await gitlab().getClosedProjectIssues("projectId");
       assertEquals(response, []);
     },
   );
