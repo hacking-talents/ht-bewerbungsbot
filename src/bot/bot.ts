@@ -17,6 +17,7 @@ import { RecruiteeError } from "../recruitee/RecruiteeError.ts";
 const HOMEWORK_TASK_TITLE = "hausaufgabe";
 const ERROR_TASK_TITLE = "Fehler fixen";
 const HOMEWORK_SENT_STAGE_TITLE = "Hausaufgabe versendet";
+const HOMEWORK_RECEIVED_STAGE_TITLE = "Hausaufgabe erhalten";
 const HOMEWORK_FIELD_NAME = "Hausaufgabe";
 const GITLAB_USERNAME_FIELD_NAME = "GitLab Account";
 const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
@@ -109,39 +110,45 @@ export default class Bot {
   }
 
   private async handleClosedCandidateIssues(candidate: Candidate) {
+    console.log("Checking issue for", candidate.name);
     const project = await this.getProjectByCandidate(candidate);
     const botGitlabUser = await this.gitlab.getOwnUserInfo();
-    const issuesByBot = await this.gitlab.getProjectIssues(
+    const closedIssuesByBot = await this.gitlab.getClosedProjectIssues(
       project.id,
       botGitlabUser,
     );
 
-    if (issuesByBot.length != 1) {
+    if (closedIssuesByBot.length < 1) {
+      return;
+    }
+    if (closedIssuesByBot.length > 1) {
       throw Error(
-        `There are ${
-          issuesByBot.length > 0 ? "multiple" : "no"
-        } issues created by the Bot in project ${project.id}`,
+        `There are multiple closed issues created by the Bot in project ${project.id}`,
       );
     }
-
-    // TODO: if issue is closed, move to next stage
-    console.log("Checking issue for", candidate.name);
-
-    // TODO: leave message, maybe message assignees?
+    await this.recruitee.proceedCandidateToStage(
+      candidate,
+      HOMEWORK_RECEIVED_STAGE_TITLE,
+    );
+    await this.recruitee.createCandidateTask(
+      candidate,
+      "🚔 MK bilden 🚔",
+      Deno.env.get("RECRUITEE_HR_ID"),
+    );
   }
 
   private async getProjectByCandidate(candidate: Candidate) {
     const projectUrlField = this.recruitee.getProfileFieldByName(
       candidate,
-      GITLAB_USERNAME_FIELD_NAME,
+      GITLAB_REPO_FIELD_NAME,
     );
     if (projectUrlField != undefined) {
       const projectUrl = (projectUrlField as CandidateSingleLineField).values[0]
         .text;
-      const projectPath = projectUrl.toLowerCase().replace(GITHUB_BASE_URL, "");
-
+      const projectPath = projectUrl.replace(GITHUB_BASE_URL, "");
+      const splittedPath = projectPath.split("/");
       return await this.gitlab.getHomeworkProject(
-        encodeURIComponent(projectPath),
+        splittedPath[splittedPath.length - 1],
       );
     } else {
       throw Error("No project candidate field found");

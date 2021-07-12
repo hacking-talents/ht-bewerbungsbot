@@ -228,10 +228,16 @@ export default class Gitlab extends HttpClient {
     return issue;
   }
 
-  async getProjectIssues(projectId: string, author?: User): Promise<Issue[]> {
-    const queryParams = author
-      ? { author_id: author.id.toString() }
-      : undefined;
+  async getClosedProjectIssues(
+    projectId: string,
+    author?: User,
+  ): Promise<Issue[]> {
+    const queryParams: { state: string; author_id?: string } = {
+      state: "closed",
+    };
+    if (author) {
+      queryParams.author_id = author.id.toString();
+    }
 
     const issues = await this.makeRequest<Issue[]>(
       `/projects/${projectId}/issues`,
@@ -242,8 +248,8 @@ export default class Gitlab extends HttpClient {
     );
 
     console.log(
-      `[Gitlab] found ${issues.length} issues${
-        author ? " with author" + author.username : ""
+      `[Gitlab] found ${issues.length} closed issues${
+        author ? " with author " + author.username : ""
       } in project ${projectId}`,
     );
 
