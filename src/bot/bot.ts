@@ -42,8 +42,10 @@ export default class Bot {
   }
 
   async poll() {
-    const candidates = await this.recruitee.getAllQualifiedCandidates();
-
+    let candidates = await this.recruitee.getAllQualifiedCandidates();
+    candidates = candidates.filter((candidate) =>
+      this.candidateHasRequiredTag(candidate)
+    );
     await this.sendAllPendingHomeworks(candidates).catch(console.warn);
     await this.checkForClosedIssues(candidates).catch(console.warn);
   }
@@ -156,10 +158,6 @@ export default class Bot {
   }
 
   private async sendHomeworkForCandidate(candidate: Candidate) {
-    if (!this.candidateHasRequiredTag(candidate)) {
-      return;
-    }
-
     if (await this.hasUnfinishedErrorTask(candidate)) {
       console.warn(
         `[Bot] Skipping candidate ${candidate.name} because they have an unfinished error task.`,
