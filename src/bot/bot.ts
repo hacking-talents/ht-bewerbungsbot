@@ -148,7 +148,10 @@ export default class Bot {
       candidate,
       GITLAB_REPO_FIELD_NAME,
     );
-    if (projectUrlField != undefined) {
+    if (
+      projectUrlField != undefined &&
+      (projectUrlField as CandidateSingleLineField).values.length != 0
+    ) {
       const projectUrl = (projectUrlField as CandidateSingleLineField).values[0]
         .text;
       const projectPath = projectUrl.replace(GITHUB_BASE_URL, "");
