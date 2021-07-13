@@ -111,7 +111,13 @@ export default class Bot {
 
   private async handleClosedCandidateIssues(candidate: Candidate) {
     console.log("Checking issue for", candidate.name);
-    const project = await this.getProjectByCandidate(candidate);
+    let project;
+    try {
+      project = await this.getProjectByCandidate(candidate);
+    } catch (_) {
+      console.warn("No project URL field found in candidate profile.");
+      return;
+    }
     const botGitlabUser = await this.gitlab.getOwnUserInfo();
     const closedIssuesByBot = await this.gitlab.getClosedProjectIssues(
       project.id,
