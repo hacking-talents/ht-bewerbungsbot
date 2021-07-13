@@ -13,7 +13,8 @@ const COMPANY_ID = Deno.env.get("COMPANY_ID") ?? "";
 const RECRUITEE_TOKEN = Deno.env.get("RECRUITEE_TOKEN") ?? "";
 const TEST_CANDIDATE_NAME = Deno.env.get("TEST_CANDIDATE_NAME") ?? "";
 const TEST_CANDIDATE_EMAIL = Deno.env.get("TEST_CANDIDATE_EMAIL") ?? "";
-const TEST_CANDIDATE_OFFER_ID = Deno.env.get("TEST_CANDIDATE_OFFER_ID") ?? "";
+const TEST_CANDIDATE_PHONE = Deno.env.get("TEST_CANDIDATE_PHONE") ?? "";
+const TEST_CANDIDATE_OFFER_ID = Number(Deno.env.get("TEST_CANDIDATE_OFFER_ID"));
 
 export const createCandidate = async (
   httpClient: HttpClient,
@@ -22,10 +23,10 @@ export const createCandidate = async (
     candidate: {
       name: TEST_CANDIDATE_NAME,
       emails: [TEST_CANDIDATE_EMAIL],
-      offer_id: TEST_CANDIDATE_OFFER_ID,
+      phones: [TEST_CANDIDATE_PHONE],
     },
+    offers: [TEST_CANDIDATE_OFFER_ID],
   };
-  console.log(body);
   const response = await httpClient.makeRequest<{ candidate: { id: number } }>(
     `/${COMPANY_ID}/candidates`,
     {
@@ -39,17 +40,30 @@ export const createCandidate = async (
 };
 
 // delete candidate
-// To be implemented
+export const deleteCandidate = async (
+  httpClient: HttpClient,
+  candidateId: number
+) => {
+  await httpClient.makeRequest<{ candidate: { id: number } }>(
+    `/${COMPANY_ID}/candidates/${candidateId}`,
+    {
+      method: "DELETE",
+    },
+  );
+};
 
 describe("End-to-end test for HT-Bewerbungsbot", () => {
   const apiToken = RECRUITEE_TOKEN;
   const recruiteeBaseUrl = "https://api.recruitee.com/c";
   const httpClient = new HttpClient(recruiteeBaseUrl, apiToken);
+  let id: number;
 
   beforeAll(async () => {
-    await createCandidate(httpClient);
+    id = await createCandidate(httpClient);
   });
-  afterAll(() => {});
+  afterAll(async () => {
+    await deleteCandidate(httpClient, id);
+  });
 
   it("creates a candidate", () => {
     assert(RECRUITEE_HR_ID == "160057");
