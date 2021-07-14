@@ -23,12 +23,13 @@ const GITLAB_USERNAME_FIELD_NAME = "GitLab Account";
 const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
 const GITHUB_BASE_URL = "https://gitlab.com/";
 const DEFAULT_HOMEWORK_DURATION_IN_DAYS = 8;
+export const TASK_ASSIGN_MK_TEXT = "MK bilden und zuordnen";
 
 export default class Bot {
   private gitlab: Gitlab;
   private recruitee: Recruitee;
-  private requiredTag: string | null = null;
   private deleteProjectInTheEnd = false;
+  private requiredTag: string | null = null;
 
   constructor(
     gitlab: Gitlab,
@@ -139,7 +140,7 @@ export default class Bot {
     );
     await this.recruitee.createCandidateTask(
       candidate,
-      "🚔 MK bilden 🚔",
+      TASK_ASSIGN_MK_TEXT,
       Deno.env.get("RECRUITEE_HR_ID"),
     );
   }
