@@ -203,7 +203,7 @@ export default class Recruitee extends HttpClient {
   async clearProfileField(candidate: Candidate, field: CandidateField) {
     if (field.id === undefined) {
       console.warn(
-        `[Recruitee] Expected Candidate Field for ${candidate.name} (${candidate.id}) to have an id, none given. Possibly the candidate is outdated?`,
+        `[Recruitee] Expected Candidate with id ${candidate.id} to have an id, none given. Possibly the candidate is outdated?`,
       );
       throw new RecruiteeError(
         `${EmojiErrorCodes.MISSING_CANDIDATE_FIELD} Kandidat:in hat nicht die erwarteten Profilfelder.`,

@@ -47,7 +47,7 @@ export default class Bot {
     candidates = candidates.filter(
       async (candidate) =>
         this.candidateHasRequiredTag(candidate) &&
-        await this.hasUnfinishedErrorTask(candidate),
+        (await this.hasUnfinishedErrorTask(candidate)),
     );
     await this.sendAllPendingHomeworks(candidates).catch(console.warn);
     await this.checkForClosedIssues(candidates).catch(console.warn);
@@ -112,7 +112,6 @@ export default class Bot {
   }
 
   private async handleClosedCandidateIssues(candidate: Candidate) {
-    console.log("Checking issue for", candidate.name);
     let project;
     try {
       project = await this.getProjectByCandidate(candidate);
