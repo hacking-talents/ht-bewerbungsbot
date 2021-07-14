@@ -20,16 +20,17 @@
 
 ### 🏞 Required environment variables
 
-Configure the following environment variables in your `.env`-file:
-
-- `RECRUITEE_TOKEN`
-- `COMPANY_ID`
-- `GITLAB_TOKEN`
-- `GITLAB_TEMPLATES_NAMESPACE`
-- `GITLAB_HOMEWORK_NAMESPACE`
+The required environment variables can be found in the `.env.example` file.
 
 The hacking-talents configuration is available in the gopass password manager
 under `misc/bewerbungsbot-Env`.
+
+To use the environment variables inside your project, you have to `source`the
+file:
+
+```bash
+source ./.env
+```
 
 Run the project with
 

@@ -1,3 +1,8 @@
+import {
+  GITLAB_REPO_FIELD_NAME,
+  GITLAB_USERNAME_FIELD_NAME,
+  TASK_ASSIGN_MK_TEXT,
+} from "../../src/bot/bot.ts";
 import { assert } from "https://deno.land/std@0.100.0/testing/asserts.ts";
 import {
   afterAll,
@@ -17,21 +22,20 @@ import { GitlabProject } from "../../src/gitlab/types.ts";
 import Bot from "../../src/bot/bot.ts";
 
 Deno.env.set("RECRUITEE_HR_ID", "160057");
-const COMPANY_ID = Deno.env.get("COMPANY_ID") ?? "";
-const RECRUITEE_TOKEN = Deno.env.get("RECRUITEE_TOKEN") ?? "";
-const TEST_CANDIDATE_NAME = Deno.env.get("TEST_CANDIDATE_NAME") ?? "";
-const TEST_CANDIDATE_EMAIL = Deno.env.get("TEST_CANDIDATE_EMAIL") ?? "";
-const TEST_CANDIDATE_PHONE = Deno.env.get("TEST_CANDIDATE_PHONE") ?? "";
-const TEST_CANDIDATE_OFFER_ID = Number(Deno.env.get("TEST_CANDIDATE_OFFER_ID"));
 const {
   GITLAB_TOKEN,
   GITLAB_TEMPLATES_NAMESPACE,
   GITLAB_HOMEWORK_NAMESPACE,
+  COMPANY_ID,
+  RECRUITEE_TOKEN,
+  TEST_CANDIDATE_NAME,
+  TEST_CANDIDATE_EMAIL,
+  TEST_CANDIDATE_PHONE,
+  TEST_CANDIDATE_OFFER_ID,
+  TEST_CANDIDATE_GITLAB_USER,
 } = Deno.env.toObject();
 
-const createCandidate = async (
-  httpClient: HttpClient,
-): Promise<number> => {
+const createCandidate = async (httpClient: HttpClient): Promise<number> => {
   const body = {
     candidate: {
       name: TEST_CANDIDATE_NAME,
@@ -40,7 +44,8 @@ const createCandidate = async (
     },
     offers: [TEST_CANDIDATE_OFFER_ID],
   };
-  const response = await httpClient.makeRequest<{ candidate: { id: number } }>(
+
+  const response = await httpClient.makeRequest<{ candidate: Candidate }>(
     `/${COMPANY_ID}/candidates`,
     {
       method: "POST",
@@ -53,7 +58,7 @@ const createCandidate = async (
   await setTestProfileInformation(
     httpClient,
     id,
-    { text: "deleteMeTemp01" },
+    { text: TEST_CANDIDATE_GITLAB_USER },
     fields.gitlabField,
   );
   await setTestProfileInformation(
@@ -85,26 +90,24 @@ const addTagToCandidate = async (
 const getTestCandidateProfileFields = async (
   httpClient: HttpClient,
   candidateId: number,
-): Promise<
-  {
-    gitlabField?: CandidateField;
-    homeworkField?: CandidateField;
-    repoField?: CandidateField;
-  }
-> => {
+): Promise<{
+  gitlabField?: CandidateField;
+  homeworkField?: CandidateField;
+  repoField?: CandidateField;
+}> => {
   const response = await httpClient.makeRequest<{ candidate: Candidate }>(
     `/${COMPANY_ID}/candidates/${candidateId}`,
     {},
   );
   const candidate = response.candidate;
-  const gitlabField = candidate.fields.find((field) =>
-    field.name === "GitLab Account"
+  const gitlabField = candidate.fields.find(
+    (field) => field.name === GITLAB_USERNAME_FIELD_NAME,
   );
-  const homeworkField = candidate.fields.find((field) =>
-    field.name === "Hausaufgabe"
+  const homeworkField = candidate.fields.find(
+    (field) => field.name === "Hausaufgabe",
   );
-  const repoField = candidate.fields.find((field) =>
-    field.name === "GitLab Repo"
+  const repoField = candidate.fields.find(
+    (field) => field.name === GITLAB_REPO_FIELD_NAME,
   );
   return {
     gitlabField,
@@ -142,7 +145,7 @@ const addTaskToTestCandidate = async (
 ) => {
   const body = {
     task: {
-      "candidate_id": candidateId,
+      candidate_id: candidateId,
       title,
     },
   };
@@ -180,10 +183,7 @@ const getHomeworkIssueId = async (
   return issue?.iid ?? 0;
 };
 
-const closeGitlabIssue = async (
-  httpClient: HttpClient,
-  projectUrl: string,
-) => {
+const closeGitlabIssue = async (httpClient: HttpClient, projectUrl: string) => {
   const project = await getGitlabProjectIdByUrl(httpClient, projectUrl);
   if (!project) return;
   const projectId = project.id;
@@ -207,10 +207,8 @@ const getTestCandidateTasks = async (
   return tasks;
 };
 
-const deleteCandidate = async (
-  httpClient: HttpClient,
-  candidateId: number,
-) => {
+const deleteCandidate = async (httpClient: HttpClient, candidateId: number) => {
+  console.log(`Deleting Test-Candidate with id ${candidateId}`);
   await httpClient.makeRequest<{ candidate: { id: number } }>(
     `/${COMPANY_ID}/candidates/${candidateId}`,
     {
@@ -261,9 +259,10 @@ describe("End-to-end test for HT-Bewerbungsbot", () => {
       "";
     await closeGitlabIssue(gitlabHttpClient, projectUrl);
     await bot.poll();
-    const tasks = await (await getTestCandidateTasks(recruiteeHttpClient, id))
-      .tasks;
-    const mkTask = tasks.find((t) => t.title == "🚔 MK bilden 🚔");
+    const tasks = await (
+      await getTestCandidateTasks(recruiteeHttpClient, id)
+    ).tasks;
+    const mkTask = tasks.find((t) => t.title == TASK_ASSIGN_MK_TEXT);
     assert(mkTask);
   });
 });

@@ -40,8 +40,8 @@ export default class Gitlab extends HttpClient {
       },
     );
 
-    const project = projects.find((p) =>
-      p.name.toLowerCase() === name.toLowerCase()
+    const project = projects.find(
+      (p) => p.name.toLowerCase() === name.toLowerCase(),
     );
 
     if (!project) {
@@ -247,11 +247,13 @@ export default class Gitlab extends HttpClient {
       },
     );
 
-    console.log(
-      `[Gitlab] found ${issues.length} closed issues${
-        author ? " with author " + author.username : ""
-      } in project ${projectId}`,
-    );
+    if (issues.length > 0) {
+      console.log(
+        `[Gitlab] found ${issues.length} closed issues${
+          author ? " with author " + author.username : ""
+        } in project ${projectId}`,
+      );
+    }
 
     return issues;
   }
