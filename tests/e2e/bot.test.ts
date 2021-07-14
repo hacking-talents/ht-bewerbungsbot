@@ -21,7 +21,6 @@ import Gitlab from "../../src/gitlab/gitlab.ts";
 import { GitlabProject } from "../../src/gitlab/types.ts";
 import Bot from "../../src/bot/bot.ts";
 
-Deno.env.set("RECRUITEE_HR_ID", "160057");
 const {
   GITLAB_TOKEN,
   GITLAB_TEMPLATES_NAMESPACE,
