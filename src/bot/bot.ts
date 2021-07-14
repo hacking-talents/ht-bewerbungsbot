@@ -44,8 +44,10 @@ export default class Bot {
 
   async poll() {
     let candidates = await this.recruitee.getAllQualifiedCandidates();
-    candidates = candidates.filter((candidate) =>
-      this.candidateHasRequiredTag(candidate)
+    candidates = candidates.filter(
+      async (candidate) =>
+        this.candidateHasRequiredTag(candidate) &&
+        await this.hasUnfinishedErrorTask(candidate),
     );
     await this.sendAllPendingHomeworks(candidates).catch(console.warn);
     await this.checkForClosedIssues(candidates).catch(console.warn);
@@ -174,13 +176,6 @@ export default class Bot {
   }
 
   private async sendHomeworkForCandidate(candidate: Candidate) {
-    if (await this.hasUnfinishedErrorTask(candidate)) {
-      console.warn(
-        `[Bot] Skipping candidate ${candidate.name} because they have an unfinished error task.`,
-      );
-      return;
-    }
-
     const homeworkTask = await this.getHomeworkTask(candidate);
     if (!homeworkTask) {
       return;
