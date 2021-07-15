@@ -15,6 +15,8 @@ import { dateToISO } from "../tools.ts";
 import { GitlabError } from "./GitlabError.ts";
 import { EmojiErrorCodes } from "../errormojis.ts";
 
+const GITLAB_ACCESS_LEVEL_DEVELOPER = 30;
+
 export default class Gitlab extends HttpClient {
   public static API_BASE_URL = "https://gitlab.com/api/v4";
 
@@ -158,7 +160,7 @@ export default class Gitlab extends HttpClient {
     const body = {
       id: projectId,
       user_id: userId,
-      access_level: 30, // 30 = Developer
+      access_level: GITLAB_ACCESS_LEVEL_DEVELOPER,
       expires_at: dateToISO(expirationDate),
     };
     await this.makeRequest<never, AddMaintainerToProjectBody>(
