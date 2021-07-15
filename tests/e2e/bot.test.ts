@@ -20,6 +20,7 @@ import {
 import Gitlab from "../../src/gitlab/gitlab.ts";
 import { GitlabProject } from "../../src/gitlab/types.ts";
 import Bot from "../../src/bot/bot.ts";
+import Monitorer from "../../src/monitoring/monitorer.ts";
 
 const {
   GITLAB_TOKEN,
@@ -33,6 +34,10 @@ const {
   TEST_CANDIDATE_OFFER_ID,
   TEST_CANDIDATE_GITLAB_USER,
 } = Deno.env.toObject();
+
+class MockMonitorer implements Monitorer {
+  async signalSuccess() {}
+}
 
 const createCandidate = async (httpClient: HttpClient): Promise<number> => {
   const body = {
@@ -232,7 +237,10 @@ describe("End-to-end test for HT-Bewerbungsbot", () => {
     GITLAB_HOMEWORK_NAMESPACE,
   );
   const recruitee = new Recruitee(COMPANY_ID, RECRUITEE_TOKEN);
-  const bot = new Bot(gitlab, recruitee, false, "Bot-Test");
+
+  const mockMonitorer = new MockMonitorer();
+
+  const bot = new Bot(gitlab, recruitee, mockMonitorer, false, "Bot-Test");
   let id: number;
 
   beforeAll(async () => {

@@ -13,6 +13,7 @@ import { addDaysToDate } from "../tools.ts";
 import { isDropdownField, isSingleLineField } from "./../recruitee/tools.ts";
 import { EmojiErrorCodes } from "../errormojis.ts";
 import { RecruiteeError } from "../recruitee/RecruiteeError.ts";
+import Monitorer from "../monitoring/monitorer.ts";
 
 const HOMEWORK_TASK_TITLE = "hausaufgabe";
 const ERROR_TASK_TITLE = "Fehler fixen";
@@ -30,10 +31,12 @@ export default class Bot {
   private recruitee: Recruitee;
   private deleteProjectInTheEnd = false;
   private requiredTag: string | null = null;
+  private monitorer: Monitorer;
 
   constructor(
     gitlab: Gitlab,
     recruitee: Recruitee,
+    monitorer: Monitorer,
     deleteProjectInTheEnd: boolean,
     requiredTag?: string,
   ) {
@@ -41,6 +44,7 @@ export default class Bot {
     this.recruitee = recruitee;
     this.requiredTag = requiredTag || null;
     this.deleteProjectInTheEnd = deleteProjectInTheEnd;
+    this.monitorer = monitorer;
   }
 
   async poll() {
@@ -52,6 +56,8 @@ export default class Bot {
     );
     await this.sendAllPendingHomeworks(candidates).catch(console.warn);
     await this.checkForClosedIssues(candidates).catch(console.warn);
+
+    await this.monitorer.signalSuccess();
   }
 
   private async handleError(error: Error, candidate: Candidate) {

@@ -2,6 +2,7 @@ import Recruitee from "./recruitee/recruitee.ts";
 import Gitlab from "./gitlab/gitlab.ts";
 import { parse } from "https://deno.land/std@0.78.0/flags/mod.ts";
 import Bot from "./bot/bot.ts";
+import HealthchecksIO from "./monitoring/healthchecksio.ts";
 
 const args = parse(Deno.args, {
   default: { o: false, tagRequired: undefined, d: false },
@@ -17,6 +18,7 @@ const {
   GITLAB_HOMEWORK_NAMESPACE,
   RECRUITEE_TOKEN,
   COMPANY_ID,
+  HEALTHCHECKS_UUID,
 } = Deno.env.toObject();
 
 if (!GITLAB_TOKEN) {
@@ -34,6 +36,9 @@ if (!RECRUITEE_TOKEN) {
 if (!COMPANY_ID) {
   exitWithError("No COMPANY_ID given");
 }
+if (!HEALTHCHECKS_UUID) {
+  exitWithError("No HEALTHCHECKS_UUID given");
+}
 
 if (tagRequired != undefined) {
   console.log(
@@ -48,10 +53,12 @@ const gitlab = new Gitlab(
 );
 
 const recruitee = new Recruitee(COMPANY_ID, RECRUITEE_TOKEN);
+const healthchecksIO = new HealthchecksIO(HEALTHCHECKS_UUID);
 
 const bot = new Bot(
   gitlab,
   recruitee,
+  healthchecksIO,
   deleteProjectInTheEnd,
   tagRequired,
 );
