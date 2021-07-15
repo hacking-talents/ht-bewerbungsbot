@@ -385,7 +385,7 @@ export default class Bot {
 
     if (!gitlabUsernameField.values.length) {
       throw new RecruiteeError(
-        `${EmojiErrorCodes.MISSING_CANDIDATE_FIELD} Es wurde kein Gitlab-Benutzername angegeben.`,
+        `${EmojiErrorCodes.MISSING_CANDIDATE_FIELD} Es wurde kein GitLab-Benutzername angegeben.`,
       );
     }
 

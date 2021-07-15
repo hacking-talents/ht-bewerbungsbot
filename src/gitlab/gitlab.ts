@@ -79,7 +79,7 @@ export default class Gitlab extends HttpClient {
   }
 
   async waitForForkFinish(homeworkForkId: string): Promise<void> {
-    console.log("[Gitlab] Forking project...");
+    console.log("[GitLab] Forking project...");
 
     let importStatus = "";
     let retryCount = 100;
@@ -94,7 +94,7 @@ export default class Gitlab extends HttpClient {
         );
       }
     }
-    console.log("[Gitlab] Project successfully forked");
+    console.log("[GitLab] Project successfully forked");
   }
 
   async forkHomework(
@@ -108,7 +108,7 @@ export default class Gitlab extends HttpClient {
     await this.unprotectAllBranches(homeworkFork);
 
     console.log(
-      `[Gitlab] Forked Git Repo with id ${homeworkProjectId} as \"${repoName}\"`,
+      `[GitLab] Forked Git Repo with id ${homeworkProjectId} as \"${repoName}\"`,
     );
 
     return homeworkFork;
@@ -127,7 +127,7 @@ export default class Gitlab extends HttpClient {
         method: "DELETE",
       },
     );
-    console.log(`[Gitlab] Unprotected branch \"${branch.name}\"`);
+    console.log(`[GitLab] Unprotected branch \"${branch.name}\"`);
   }
 
   async unprotectAllBranches(project: GitlabProject) {
@@ -139,7 +139,7 @@ export default class Gitlab extends HttpClient {
       }),
     );
 
-    console.warn("[Gitlab] Successfully unprotected branches");
+    console.warn("[GitLab] Successfully unprotected branches");
   }
 
   async deleteProject(id: string) {
@@ -147,7 +147,7 @@ export default class Gitlab extends HttpClient {
       method: "DELETE",
     });
 
-    console.log(`[Gitlab] Deleted project with id ${id}`);
+    console.log(`[GitLab] Deleted project with id ${id}`);
   }
 
   async addMaintainerToProject(
@@ -170,7 +170,7 @@ export default class Gitlab extends HttpClient {
     );
 
     console.log(
-      `[Gitlab] Added user with id ${userId} to Repo with id ${projectId}`,
+      `[GitLab] Added user with id ${userId} to Repo with id ${projectId}`,
     );
   }
 
@@ -189,7 +189,7 @@ export default class Gitlab extends HttpClient {
       );
     }
 
-    console.log(`[Gitlab] Found User ${user.username} with id ${user.id}`);
+    console.log(`[GitLab] Found User ${user.username} with id ${user.id}`);
 
     return user;
   }
@@ -228,7 +228,7 @@ export default class Gitlab extends HttpClient {
     );
 
     console.log(
-      `[Gitlab] Created Issue \"${issue.title}\" with assignee ${issue.assignee.username}`,
+      `[GitLab] Created Issue \"${issue.title}\" with assignee ${issue.assignee.username}`,
     );
 
     return issue;
@@ -255,7 +255,7 @@ export default class Gitlab extends HttpClient {
 
     if (issues.length > 0) {
       console.log(
-        `[Gitlab] found ${issues.length} closed issues${
+        `[GitLab] found ${issues.length} closed issues${
           author ? " with author " + author.username : ""
         } in project ${projectId}`,
       );
