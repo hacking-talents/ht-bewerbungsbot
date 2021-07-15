@@ -92,3 +92,37 @@ export type StageDetail = {
   id: number;
   name: string;
 };
+
+export type CreateCandidateTaskBody = {
+  task: {
+    title: string;
+    // deno-lint-ignore camelcase
+    candidate_id: number;
+    // deno-lint-ignore camelcase
+    admin_ids?: string[];
+  };
+};
+
+export type CompleteTaskBody = {
+  task: {
+    completed: boolean;
+  };
+};
+
+export type AddNoteToCandidateBody = {
+  note: {
+    id: null;
+    body: string;
+  };
+};
+
+export type SendMailToCandidateBody = {
+  // deno-lint-ignore camelcase
+  body_html: string;
+  subject: string;
+  to: { candidate_id: number; candidate_email: string }[];
+};
+
+export type UpdateProfileFieldSingleLineBody = {
+  field: CandidateSingleLineField;
+};

@@ -33,3 +33,23 @@ export type Issue = {
   author: User;
   web_url: string;
 };
+
+export type ForkProjectBody = {
+  namespace_id: string;
+  name: string;
+  path: string;
+};
+
+export type AddMaintainerToProjectBody = {
+  id: string;
+  user_id: string;
+  access_level: number;
+  expires_at: string;
+};
+
+export type CreateHomeworkIssueBody = {
+  title: string;
+  description: string;
+  assignee_ids: string;
+  due_date: string;
+};

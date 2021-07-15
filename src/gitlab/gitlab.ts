@@ -1,7 +1,10 @@
 // deno-lint-ignore-file camelcase
 import { gitlabIssueTemplate, GitlabIssueTemplateValues } from "../messages.ts";
 import {
+  AddMaintainerToProjectBody,
   Branch,
+  CreateHomeworkIssueBody,
+  ForkProjectBody,
   GitlabProject as GitlabProject,
   ImportStatus,
   Issue,
@@ -69,7 +72,7 @@ export default class Gitlab extends HttpClient {
       name: repoName,
       path: repoName,
     };
-    return await this.makeRequest<GitlabProject>(
+    return await this.makeRequest<GitlabProject, ForkProjectBody>(
       `/projects/${homeworkProjectId}/fork`,
       { method: "POST", body },
     );
@@ -158,10 +161,13 @@ export default class Gitlab extends HttpClient {
       access_level: 30, // 30 = Developer
       expires_at: dateToISO(expirationDate),
     };
-    await this.makeRequest(`/projects/${projectId}/members`, {
-      method: "POST",
-      body,
-    });
+    await this.makeRequest<never, AddMaintainerToProjectBody>(
+      `/projects/${projectId}/members`,
+      {
+        method: "POST",
+        body,
+      },
+    );
 
     console.log(
       `[Gitlab] Added user with id ${userId} to Repo with id ${projectId}`,
@@ -213,7 +219,7 @@ export default class Gitlab extends HttpClient {
       due_date: dateToISO(dueDate),
     };
 
-    const issue = await this.makeRequest<Issue>(
+    const issue = await this.makeRequest<Issue, CreateHomeworkIssueBody>(
       `/projects/${projectId}/issues`,
       {
         method: "POST",

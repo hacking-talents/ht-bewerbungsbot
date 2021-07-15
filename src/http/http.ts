@@ -10,10 +10,10 @@ export default class HttpClient {
     this.apiToken = apiToken;
   }
 
-  async makeRequest<T = unknown>(
+  async makeRequest<TResponse = unknown, TBody = unknown>(
     slug: string,
-    options?: HttpRequestOptions,
-  ): Promise<T> {
+    options?: HttpRequestOptions<TBody>,
+  ): Promise<TResponse> {
     let url = `${this.baseUrl}${slug}`;
     if (options?.queryParams) {
       url += `?${new URLSearchParams(options.queryParams).toString()}`;

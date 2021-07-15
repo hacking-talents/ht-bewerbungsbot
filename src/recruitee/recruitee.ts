@@ -5,16 +5,21 @@ import {
   SendHomeworkTemplateValues,
 } from "../messages.ts";
 import {
+  AddNoteToCandidateBody,
   Candidate,
   CandidateDetails,
   CandidateField,
   CandidateReference,
   CandidateSingleLineField,
+  CompleteTaskBody,
+  CreateCandidateTaskBody,
   MinimalCandidate,
   Offer,
+  SendMailToCandidateBody,
   StageDetail,
   Task,
   TaskDetails,
+  UpdateProfileFieldSingleLineBody,
 } from "./types.ts";
 import { RecruiteeError } from "./RecruiteeError.ts";
 import { EmojiErrorCodes } from "../errormojis.ts";
@@ -78,13 +83,16 @@ export default class Recruitee extends HttpClient {
       task: {
         title,
         candidate_id: candidate.id,
-        admin_ids: [adminID],
+        admin_ids: adminID ? [adminID] : undefined,
       },
     };
-    return await this.makeRequest<TaskDetails>(`/tasks/`, {
-      method: "POST",
-      body,
-    });
+    return await this.makeRequest<TaskDetails, CreateCandidateTaskBody>(
+      `/tasks/`,
+      {
+        method: "POST",
+        body,
+      },
+    );
   }
 
   async getCandidateById(candidateId: number): Promise<Candidate> {
@@ -95,7 +103,7 @@ export default class Recruitee extends HttpClient {
   }
 
   async completeTask(id: number): Promise<void> {
-    await this.makeRequest(`/tasks/${id}`, {
+    await this.makeRequest<never, CompleteTaskBody>(`/tasks/${id}`, {
       method: "PUT",
       body: {
         task: {
@@ -111,15 +119,18 @@ export default class Recruitee extends HttpClient {
     candidateId: number,
     message: string,
   ): Promise<void> {
-    await this.makeRequest(`/candidates/${candidateId}/notes`, {
-      method: "POST",
-      body: {
-        note: {
-          id: null,
-          body: message,
+    await this.makeRequest<never, AddNoteToCandidateBody>(
+      `/candidates/${candidateId}/notes`,
+      {
+        method: "POST",
+        body: {
+          note: {
+            id: null,
+            body: message,
+          },
         },
       },
-    });
+    );
   }
 
   getCandidateSalutation(candidate: Candidate): string {
@@ -162,7 +173,7 @@ export default class Recruitee extends HttpClient {
       ],
     };
 
-    await this.makeRequest(`/mailbox/send`, {
+    await this.makeRequest<never, SendMailToCandidateBody>(`/mailbox/send`, {
       method: "POST",
       body: body,
     });
@@ -186,14 +197,14 @@ export default class Recruitee extends HttpClient {
     const body = { field: field };
 
     if (field.id !== null) {
-      await this.makeRequest(
+      await this.makeRequest<never, UpdateProfileFieldSingleLineBody>(
         `/custom_fields/candidates/${candidate.id.toString()}/fields/${
           field.id?.toString()
         }`,
         { method: "PATCH", body },
       );
     } else {
-      await this.makeRequest(
+      await this.makeRequest<never, UpdateProfileFieldSingleLineBody>(
         `/custom_fields/candidates/${candidate.id.toString()}/fields`,
         { method: "POST", body },
       );
