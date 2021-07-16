@@ -16,6 +16,7 @@ import { GitlabError } from "./GitlabError.ts";
 import { EmojiErrorCodes } from "../errormojis.ts";
 
 const GITLAB_ACCESS_LEVEL_DEVELOPER = 30;
+const SOLUTION_BRANCH_NAME = "solution";
 
 export default class Gitlab extends HttpClient {
   public static API_BASE_URL = "https://gitlab.com/api/v4";
@@ -106,7 +107,7 @@ export default class Gitlab extends HttpClient {
     const homeworkFork = await this.forkProject(homeworkProjectId, repoName);
 
     await this.waitForForkFinish(homeworkFork.id);
-
+    await this.deleteSolutionBranch(homeworkFork);
     await this.unprotectAllBranches(homeworkFork);
 
     console.log(
@@ -122,6 +123,15 @@ export default class Gitlab extends HttpClient {
     );
   }
 
+  async deleteBranch(project: GitlabProject, branchName: string) {
+    const path = `/projects/${project.id}/repository/branches/${branchName}`;
+    await this.makeRequest(path, { method: "DELETE" });
+
+    console.log(
+      `[GitLab] Deleted branch "${branchName}" of repository ${project.id}`,
+    );
+  }
+
   async unprotectBranch(project: GitlabProject, branch: Branch) {
     await this.makeRequest(
       `/projects/${project.id}/protected_branches/${branch.name}`,
@@ -130,6 +140,16 @@ export default class Gitlab extends HttpClient {
       },
     );
     console.log(`[GitLab] Unprotected branch \"${branch.name}\"`);
+  }
+
+  async deleteSolutionBranch(project: GitlabProject) {
+    const branches = await this.getBranches(project);
+    const hasSolutionBranch = branches.some((branch) =>
+      branch.name === SOLUTION_BRANCH_NAME
+    );
+    if (hasSolutionBranch) {
+      await this.deleteBranch(project, SOLUTION_BRANCH_NAME);
+    }
   }
 
   async unprotectAllBranches(project: GitlabProject) {
