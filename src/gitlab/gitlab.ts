@@ -137,7 +137,9 @@ export default class Gitlab extends HttpClient {
 
     await Promise.all(
       branches.map(async (branch) => {
-        await this.unprotectBranch(project, branch);
+        if (branch.protected) {
+          await this.unprotectBranch(project, branch);
+        }
       }),
     );
 
