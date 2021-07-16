@@ -219,13 +219,15 @@ export default class Bot {
 
     await this.finalizeCandidate(candidate, homeworkTask, homework, dueDate);
 
-    await this.notifyCandidate(
-      candidate,
-      homeworkTaskDetails.references,
-      gitlabIssue,
-      gitlabFork,
-      addDaysToDate(dueDate, -1),
-    );
+    if (this.recruitee.shouldSendMail(candidate)) {
+      await this.notifyCandidate(
+        candidate,
+        homeworkTaskDetails.references,
+        gitlabIssue,
+        gitlabFork,
+        addDaysToDate(dueDate, -1),
+      );
+    }
 
     if (this.deleteProjectInTheEnd) {
       await this.deleteGitlabProjectAndRemoveRepoField(

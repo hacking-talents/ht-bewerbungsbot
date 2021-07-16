@@ -1,4 +1,5 @@
 import {
+  CandidateBooleanField,
   CandidateDropdownField,
   CandidateField,
   CandidateSingleLineField,
@@ -14,4 +15,10 @@ export const isSingleLineField = (
   field: CandidateField,
 ): field is CandidateSingleLineField => {
   return field.kind === "single_line";
+};
+
+export const isBooleanField = (
+  field: CandidateField,
+): field is CandidateBooleanField => {
+  return field.kind === "boolean";
 };

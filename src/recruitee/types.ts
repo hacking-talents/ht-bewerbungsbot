@@ -1,9 +1,8 @@
+// deno-lint-ignore-file camelcase
 export type Offer = {
   title: string;
   id: number;
-  // deno-lint-ignore camelcase
   offer_tags: string[];
-  // deno-lint-ignore camelcase
   pipeline_template: PipelineTemplate;
 };
 
@@ -50,21 +49,21 @@ export type CandidateDropdownField = CandidateField & {
   values: { value: string }[];
 };
 
+export type CandidateBooleanField = CandidateField & {
+  kind: "boolean";
+  values: { flag: boolean }[];
+};
+
 export type CandidateReference = {
   type: string;
-  // deno-lint-ignore camelcase
   first_name?: string;
 };
 
 export type Placement = {
-  // deno-lint-ignore camelcase
   candidate_id: number;
   id: number;
-  // deno-lint-ignore camelcase
   stage_id: number;
-  // deno-lint-ignore camelcase
   disqualify_reason: string;
-  // deno-lint-ignore camelcase
   offer_id: number;
 };
 
@@ -72,9 +71,7 @@ export type Task = {
   id: number;
   completed: boolean;
   title: string;
-  // deno-lint-ignore camelcase
   due_date: string;
-  // deno-lint-ignore camelcase
   created_at: string;
   references: CandidateReference[];
 };
@@ -96,9 +93,7 @@ export type StageDetail = {
 export type CreateCandidateTaskBody = {
   task: {
     title: string;
-    // deno-lint-ignore camelcase
     candidate_id: number;
-    // deno-lint-ignore camelcase
     admin_ids?: string[];
   };
 };
@@ -117,7 +112,6 @@ export type AddNoteToCandidateBody = {
 };
 
 export type SendMailToCandidateBody = {
-  // deno-lint-ignore camelcase
   body_html: string;
   subject: string;
   to: { candidate_id: number; candidate_email: string }[];

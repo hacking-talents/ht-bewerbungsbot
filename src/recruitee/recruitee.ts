@@ -1,4 +1,4 @@
-import { isSingleLineField } from "./tools.ts";
+import { isBooleanField, isSingleLineField } from "./tools.ts";
 import HttpClient from "../http/http.ts";
 import {
   sendHomeworkTemplate,
@@ -26,6 +26,7 @@ import { EmojiErrorCodes } from "../errormojis.ts";
 
 export const ADDRESS_FIELD_NAME = "Anrede Override";
 export const SIGNATURE_FIELD_NAME = "Unterschrift Override";
+export const SHOULD_SEND_MAIL_FIELD_NAME = "Bot-Mails";
 const ADMIN_REFERENCE_TYPE = "Admin";
 export const DEFAULT_SIGNATURE = "Deine Hacking Talents";
 const OFFER_BOT_TAG = "HT-Bot Target";
@@ -254,6 +255,16 @@ export default class Recruitee extends HttpClient {
       return this.buildSignatureFromNames(firstNames);
     }
     return DEFAULT_SIGNATURE;
+  }
+
+  shouldSendMail(candidate: Candidate): boolean {
+    const field = candidate.fields.find(
+      (field) => field.name === SHOULD_SEND_MAIL_FIELD_NAME,
+    );
+    if (field && isBooleanField(field) && field.values.length > 0) {
+      return field.values[0].flag;
+    }
+    return true;
   }
 
   async proceedCandidateToStage(

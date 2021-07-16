@@ -6,6 +6,7 @@ import {
 import { Stub, stub } from "https://deno.land/x/mock@v0.9.5/mod.ts";
 import {
   Candidate,
+  CandidateBooleanField,
   CandidateField,
   CandidateReference,
   CandidateSingleLineField,
@@ -20,6 +21,7 @@ import { withMockedFetch } from "../http/http.test.ts";
 import Recruitee, {
   ADDRESS_FIELD_NAME,
   DEFAULT_SIGNATURE,
+  SHOULD_SEND_MAIL_FIELD_NAME,
   SIGNATURE_FIELD_NAME,
 } from "./recruitee.ts";
 import { SendHomeworkTemplateValues } from "../messages.ts";
@@ -381,31 +383,34 @@ Deno.test("clearProfileField uses the correct URL and HTTP method", () => {
   );
 });
 
-Deno.test("clearProfileField throws an exception when no candidate field with a valid id was provided", () => {
-  const mockedCandidate = mockCandidate();
-  const candidateId = mockedCandidate.id;
-  const mockedCandidateField = mockCandidateField(undefined);
-  console.log(mockedCandidateField);
+Deno.test(
+  "clearProfileField throws an exception when no candidate field with a valid id was provided",
+  () => {
+    const mockedCandidate = mockCandidate();
+    const candidateId = mockedCandidate.id;
+    const mockedCandidateField = mockCandidateField(undefined);
+    console.log(mockedCandidateField);
 
-  withMockedFetch(
-    (input, init) => {
-      assertEquals(
-        input,
-        `${Recruitee.BASE_URL}/companyId/custom_fields/candidates/${candidateId}/fields/${mockedCandidateField.id}`,
-      );
-      assertEquals(init?.method, "DELETE");
-      return new Response();
-    },
-    async () => {
-      await assertThrowsAsync(async () => {
-        await recruitee().clearProfileField(
-          mockedCandidate,
-          mockedCandidateField,
+    withMockedFetch(
+      (input, init) => {
+        assertEquals(
+          input,
+          `${Recruitee.BASE_URL}/companyId/custom_fields/candidates/${candidateId}/fields/${mockedCandidateField.id}`,
         );
-      });
-    },
-  );
-});
+        assertEquals(init?.method, "DELETE");
+        return new Response();
+      },
+      async () => {
+        await assertThrowsAsync(async () => {
+          await recruitee().clearProfileField(
+            mockedCandidate,
+            mockedCandidateField,
+          );
+        });
+      },
+    );
+  },
+);
 
 Deno.test(
   "getSignature returns default signature when no assignees are specified",
@@ -479,6 +484,77 @@ Deno.test(
     assertEquals(actual, "Anna, Bob und Chris von den hacking talents");
   },
 );
+Deno.test(
+  "shouldSendMail returns true if respected Option in Recruitee is left blank",
+  () => {
+    const field: CandidateBooleanField = {
+      id: 123,
+      kind: "boolean",
+      name: SHOULD_SEND_MAIL_FIELD_NAME,
+      values: [],
+    };
+
+    const candidate: Candidate = {
+      id: 123,
+      emails: [],
+      name: "",
+      fields: [field],
+      placements: [],
+      tags: [],
+    };
+
+    const actual = recruitee().shouldSendMail(candidate);
+    assertEquals(actual, true);
+  },
+);
+
+Deno.test(
+  "shouldSendMail returns true if respected Option in Recruitee is true",
+  () => {
+    const field: CandidateBooleanField = {
+      id: 123,
+      kind: "boolean",
+      name: SHOULD_SEND_MAIL_FIELD_NAME,
+      values: [{ flag: true }],
+    };
+
+    const candidate: Candidate = {
+      id: 123,
+      emails: [],
+      name: "",
+      fields: [field],
+      placements: [],
+      tags: [],
+    };
+
+    const actual = recruitee().shouldSendMail(candidate);
+    assertEquals(actual, true);
+  },
+);
+
+Deno.test(
+  "shouldSendMail returns false if respected Option in Recruitee is false",
+  () => {
+    const field: CandidateBooleanField = {
+      id: 123,
+      kind: "boolean",
+      name: SHOULD_SEND_MAIL_FIELD_NAME,
+      values: [{ flag: false }],
+    };
+
+    const candidate: Candidate = {
+      id: 123,
+      emails: [],
+      name: "",
+      fields: [field],
+      placements: [],
+      tags: [],
+    };
+
+    const actual = recruitee().shouldSendMail(candidate);
+    assertEquals(actual, false);
+  },
+);
 
 Deno.test(
   "proceedCandidateToStage uses the correct URL and HTTP method",
@@ -511,30 +587,27 @@ Deno.test(
   },
 );
 
-Deno.test(
-  "getProfileFieldByName returns the correct CandidateField",
-  () => {
-    const fieldName = "bar";
-    const candidate = mockCandidate();
-    candidate.fields = [
-      {
-        name: "foo",
-        id: 123,
-        kind: "boolean",
-      },
-      {
-        name: fieldName,
-        id: 345,
-        kind: "boolean",
-      },
-    ];
-    const candidateField = recruitee().getProfileFieldByName(
-      candidate,
-      fieldName,
-    );
-    assertEquals(candidateField?.id, 345);
-  },
-);
+Deno.test("getProfileFieldByName returns the correct CandidateField", () => {
+  const fieldName = "bar";
+  const candidate = mockCandidate();
+  candidate.fields = [
+    {
+      name: "foo",
+      id: 123,
+      kind: "boolean",
+    },
+    {
+      name: fieldName,
+      id: 345,
+      kind: "boolean",
+    },
+  ];
+  const candidateField = recruitee().getProfileFieldByName(
+    candidate,
+    fieldName,
+  );
+  assertEquals(candidateField?.id, 345);
+});
 
 Deno.test(
   "getProfileFieldByName returns undefined when no field with the appropriate fieldName exists",
