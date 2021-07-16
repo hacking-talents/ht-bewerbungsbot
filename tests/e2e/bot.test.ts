@@ -1,26 +1,36 @@
 import {
   GITLAB_REPO_FIELD_NAME,
   GITLAB_USERNAME_FIELD_NAME,
+  HOMEWORK_FIELD_NAME,
   TASK_ASSIGN_MK_TEXT,
 } from "../../src/bot/bot.ts";
-import { assert } from "https://deno.land/std@0.100.0/testing/asserts.ts";
+import {
+  assertExists,
+  assertNotEquals,
+} from "https://deno.land/std@0.100.0/testing/asserts.ts";
 import {
   afterAll,
   beforeAll,
   describe,
   it,
 } from "https://deno.land/x/test_suite@v0.7.1/mod.ts";
-import HttpClient from "../../src/http/http.ts";
 import Recruitee from "../../src/recruitee/recruitee.ts";
 import {
   Candidate,
+  CandidateDropdownField,
   CandidateField,
   CandidateSingleLineField,
 } from "../../src/recruitee/types.ts";
 import Gitlab from "../../src/gitlab/gitlab.ts";
+import {
+  isDropdownField,
+  isSingleLineField,
+} from "../../src/recruitee/tools.ts";
 import { GitlabProject } from "../../src/gitlab/types.ts";
 import Bot from "../../src/bot/bot.ts";
 import Monitorer from "../../src/monitoring/monitorer.ts";
+
+const E2E_CANDIDATE_TAG = "Bot-E2E-Test";
 
 const {
   GITLAB_TOKEN,
@@ -33,204 +43,14 @@ const {
   TEST_CANDIDATE_PHONE,
   TEST_CANDIDATE_OFFER_ID,
   TEST_CANDIDATE_GITLAB_USER,
+  TEST_HOMEWORK,
 } = Deno.env.toObject();
 
 class MockMonitorer implements Monitorer {
   async signalSuccess() {}
 }
 
-const createCandidate = async (httpClient: HttpClient): Promise<number> => {
-  const body = {
-    candidate: {
-      name: TEST_CANDIDATE_NAME,
-      emails: [TEST_CANDIDATE_EMAIL],
-      phones: [TEST_CANDIDATE_PHONE],
-    },
-    offers: [TEST_CANDIDATE_OFFER_ID],
-  };
-
-  const response = await httpClient.makeRequest<{ candidate: Candidate }>(
-    `/${COMPANY_ID}/candidates`,
-    {
-      method: "POST",
-      body,
-    },
-  );
-  const id = response.candidate.id;
-  await addTagToCandidate(httpClient, id);
-  const fields = await getTestCandidateProfileFields(httpClient, id);
-  await setTestProfileInformation(
-    httpClient,
-    id,
-    { text: TEST_CANDIDATE_GITLAB_USER },
-    fields.gitlabField,
-  );
-  await setTestProfileInformation(
-    httpClient,
-    id,
-    { value: "TodoApi" },
-    fields.homeworkField,
-  );
-  await addTaskToTestCandidate(httpClient, id, "Hausaufgabe");
-  return id;
-};
-
-const addTagToCandidate = async (
-  httpClient: HttpClient,
-  candidateId: number,
-) => {
-  const body = {
-    tag: "Bot-Test",
-  };
-  await httpClient.makeRequest<{ candidate: { id: number } }>(
-    `/${COMPANY_ID}/candidates/${candidateId}/tags`,
-    {
-      method: "POST",
-      body,
-    },
-  );
-};
-
-const getTestCandidateProfileFields = async (
-  httpClient: HttpClient,
-  candidateId: number,
-): Promise<{
-  gitlabField?: CandidateField;
-  homeworkField?: CandidateField;
-  repoField?: CandidateField;
-}> => {
-  const response = await httpClient.makeRequest<{ candidate: Candidate }>(
-    `/${COMPANY_ID}/candidates/${candidateId}`,
-    {},
-  );
-  const candidate = response.candidate;
-  const gitlabField = candidate.fields.find(
-    (field) => field.name === GITLAB_USERNAME_FIELD_NAME,
-  );
-  const homeworkField = candidate.fields.find(
-    (field) => field.name === "Hausaufgabe",
-  );
-  const repoField = candidate.fields.find(
-    (field) => field.name === GITLAB_REPO_FIELD_NAME,
-  );
-  return {
-    gitlabField,
-    homeworkField,
-    repoField,
-  };
-};
-
-const setTestProfileInformation = async (
-  httpClient: HttpClient,
-  candidateId: number,
-  values: unknown,
-  field?: CandidateField,
-) => {
-  if (!field) return;
-  const body = {
-    field: {
-      ...field,
-      values: [values],
-    },
-  };
-  await httpClient.makeRequest<{ candidate: { id: number } }>(
-    `/${COMPANY_ID}/custom_fields/candidates/${candidateId}/fields/`,
-    {
-      method: "POST",
-      body,
-    },
-  );
-};
-
-const addTaskToTestCandidate = async (
-  httpClient: HttpClient,
-  candidateId: number,
-  title: string,
-) => {
-  const body = {
-    task: {
-      candidate_id: candidateId,
-      title,
-    },
-  };
-  await httpClient.makeRequest<{ candidate: { id: number } }>(
-    `/${COMPANY_ID}/tasks`,
-    {
-      method: "POST",
-      body,
-    },
-  );
-};
-
-const getGitlabProjectIdByUrl = async (
-  httpClient: HttpClient,
-  projectUrl: string,
-): Promise<GitlabProject | undefined> => {
-  const projects = await httpClient.makeRequest<GitlabProject[]>(
-    `/groups/${GITLAB_HOMEWORK_NAMESPACE}/projects`,
-    {},
-  );
-  const project = projects.find((p) => p.web_url == projectUrl);
-  return project;
-};
-
-const getHomeworkIssueId = async (
-  httpClient: HttpClient,
-  project: GitlabProject,
-) => {
-  const projectId = project.id;
-  const issues = await httpClient.makeRequest<[{ title: string; iid: number }]>(
-    `/projects/${projectId}/issues`,
-    {},
-  );
-  const issue = issues.find((i) => i.title === "Hausaufgabe abschließen");
-  return issue?.iid ?? 0;
-};
-
-const closeGitlabIssue = async (httpClient: HttpClient, projectUrl: string) => {
-  const project = await getGitlabProjectIdByUrl(httpClient, projectUrl);
-  if (!project) return;
-  const projectId = project.id;
-  const issueId = await getHomeworkIssueId(httpClient, project);
-  await httpClient.makeRequest<{ candidate: { id: number } }>(
-    `/projects/${projectId}/issues/${issueId}?state_event=close`,
-    {
-      method: "PUT",
-    },
-  );
-};
-
-const getTestCandidateTasks = async (
-  httpClient: HttpClient,
-  candidateId: number,
-) => {
-  const tasks = await httpClient.makeRequest<{ tasks: [{ title: string }] }>(
-    `/${COMPANY_ID}/candidates/${candidateId}/tasks`,
-    {},
-  );
-  return tasks;
-};
-
-const deleteCandidate = async (httpClient: HttpClient, candidateId: number) => {
-  console.log(`Deleting Test-Candidate with id ${candidateId}`);
-  await httpClient.makeRequest<{ candidate: { id: number } }>(
-    `/${COMPANY_ID}/candidates/${candidateId}`,
-    {
-      method: "DELETE",
-    },
-  );
-};
-
 describe("End-to-end test for HT-Bewerbungsbot", () => {
-  const recruiteeApiToken = RECRUITEE_TOKEN;
-  const gitlabApiToken = GITLAB_TOKEN;
-  const recruiteeBaseUrl = "https://api.recruitee.com/c";
-  const gitlabBaseUrl = "https://gitlab.com/api/v4";
-  const recruiteeHttpClient = new HttpClient(
-    recruiteeBaseUrl,
-    recruiteeApiToken,
-  );
-  const gitlabHttpClient = new HttpClient(gitlabBaseUrl, gitlabApiToken);
   const gitlab = new Gitlab(
     GITLAB_TOKEN,
     GITLAB_TEMPLATES_NAMESPACE,
@@ -240,36 +60,241 @@ describe("End-to-end test for HT-Bewerbungsbot", () => {
 
   const mockMonitorer = new MockMonitorer();
 
-  const bot = new Bot(gitlab, recruitee, mockMonitorer, false, "Bot-Test");
-  let id: number;
+  const bot = new Bot(
+    gitlab,
+    recruitee,
+    mockMonitorer,
+    false,
+    E2E_CANDIDATE_TAG,
+  );
+  let candidateId: number;
 
   beforeAll(async () => {
-    id = await createCandidate(recruiteeHttpClient);
+    candidateId = await createCandidate(recruitee);
   });
+
   afterAll(async () => {
-    await deleteCandidate(recruiteeHttpClient, id);
+    await deleteCandidate(recruitee, candidateId);
   });
 
   it("checks that a homework is forked and the 'GitLab Repository' field is correctly set", async () => {
     await bot.poll();
-    const fields = await getTestCandidateProfileFields(recruiteeHttpClient, id);
-    const repoField = fields.repoField;
-    const gitlabRepo = (repoField as CandidateSingleLineField).values[0].text ??
-      "";
-    assert(gitlabRepo !== "");
+
+    const candidate = await recruitee.getCandidateById(candidateId);
+    const gitlabRepoUrl = getGitlabRepoFieldValueOrThrow(recruitee, candidate);
+    assertNotEquals(gitlabRepoUrl, "");
   });
 
   it("checks that a task is added to the Recruitee profile", async () => {
-    const fields = await getTestCandidateProfileFields(recruiteeHttpClient, id);
-    const repoField = fields.repoField;
-    const projectUrl = (repoField as CandidateSingleLineField).values[0].text ??
-      "";
-    await closeGitlabIssue(gitlabHttpClient, projectUrl);
+    const candidate = await recruitee.getCandidateById(candidateId);
+    const gitlabRepoUrl = getGitlabRepoFieldValueOrThrow(recruitee, candidate);
+
+    await closeGitlabIssue(gitlab, gitlabRepoUrl);
     await bot.poll();
-    const tasks = await (
-      await getTestCandidateTasks(recruiteeHttpClient, id)
-    ).tasks;
+
+    const tasks = await getTestCandidateTasks(recruitee, candidateId);
     const mkTask = tasks.find((t) => t.title == TASK_ASSIGN_MK_TEXT);
-    assert(mkTask);
+    assertExists(mkTask);
   });
 });
+
+function getGitlabRepoFieldValueOrThrow(
+  recruitee: Recruitee,
+  candidate: Candidate,
+): string {
+  const field = recruitee.getProfileFieldByName(
+    candidate,
+    GITLAB_REPO_FIELD_NAME,
+  );
+
+  if (!field || !isSingleLineField(field)) {
+    throw new Error(
+      "expected gitlab repository field to be a single line field",
+    );
+  }
+
+  return field.values[0].text;
+}
+
+function getGitlabUsernameFieldOrThrow(
+  recruitee: Recruitee,
+  candidate: Candidate,
+): CandidateSingleLineField {
+  const field = recruitee.getProfileFieldByName(
+    candidate,
+    GITLAB_USERNAME_FIELD_NAME,
+  );
+
+  if (!field || !isSingleLineField(field)) {
+    throw new Error("expected gitlab username field to be a single line field");
+  }
+
+  return field;
+}
+
+function getHomeworkFieldOrThrow(
+  recruitee: Recruitee,
+  candidate: Candidate,
+): CandidateDropdownField {
+  const field = recruitee.getProfileFieldByName(candidate, HOMEWORK_FIELD_NAME);
+
+  if (!field || !isDropdownField(field)) {
+    throw new Error("expected homework field to be a dropdown field");
+  }
+
+  return field;
+}
+
+async function createCandidate(recruitee: Recruitee): Promise<number> {
+  const body = {
+    candidate: {
+      name: TEST_CANDIDATE_NAME,
+      emails: [TEST_CANDIDATE_EMAIL],
+      phones: [TEST_CANDIDATE_PHONE],
+    },
+    offers: [TEST_CANDIDATE_OFFER_ID],
+  };
+
+  const { candidate } = await recruitee.makeRequest<{ candidate: Candidate }>(
+    "/candidates",
+    {
+      method: "POST",
+      body,
+    },
+  );
+
+  await addTagToCandidate(recruitee, candidate.id);
+  await setTestProfileInformation(
+    recruitee,
+    candidate.id,
+    { text: TEST_CANDIDATE_GITLAB_USER },
+    getGitlabUsernameFieldOrThrow(recruitee, candidate),
+  );
+  await setTestProfileInformation(
+    recruitee,
+    candidate.id,
+    { value: TEST_HOMEWORK },
+    getHomeworkFieldOrThrow(recruitee, candidate),
+  );
+  await addTaskToTestCandidate(recruitee, candidate.id, "Hausaufgabe");
+  return candidate.id;
+}
+
+async function addTagToCandidate(
+  recruitee: Recruitee,
+  candidateId: number,
+) {
+  const body = {
+    tag: E2E_CANDIDATE_TAG,
+  };
+  await recruitee.makeRequest<{ candidate: { id: number } }>(
+    `/candidates/${candidateId}/tags`,
+    {
+      method: "POST",
+      body,
+    },
+  );
+}
+
+async function setTestProfileInformation(
+  recruitee: Recruitee,
+  candidateId: number,
+  values: unknown,
+  field?: CandidateField,
+) {
+  if (!field) return;
+  const body = {
+    field: {
+      ...field,
+      values: [values],
+    },
+  };
+  await recruitee.makeRequest<{ candidate: { id: number } }>(
+    `/custom_fields/candidates/${candidateId}/fields/`,
+    {
+      method: "POST",
+      body,
+    },
+  );
+}
+
+async function addTaskToTestCandidate(
+  recruitee: Recruitee,
+  candidateId: number,
+  title: string,
+) {
+  const body = {
+    task: {
+      candidate_id: candidateId,
+      title,
+    },
+  };
+  await recruitee.makeRequest<{ candidate: { id: number } }>(
+    "/tasks",
+    {
+      method: "POST",
+      body,
+    },
+  );
+}
+
+async function getGitlabProjectIdByUrl(
+  gitlab: Gitlab,
+  projectUrl: string,
+): Promise<GitlabProject | undefined> {
+  const projects = await gitlab.makeRequest<GitlabProject[]>(
+    `/groups/${GITLAB_HOMEWORK_NAMESPACE}/projects`,
+    {},
+  );
+  const project = projects.find((p) => p.web_url == projectUrl);
+  return project;
+}
+
+async function getHomeworkIssueId(
+  gitlab: Gitlab,
+  project: GitlabProject,
+) {
+  const projectId = project.id;
+  const issues = await gitlab.makeRequest<[{ title: string; iid: number }]>(
+    `/projects/${projectId}/issues`,
+    {},
+  );
+  const issue = issues.find((i) => i.title === "Hausaufgabe abschließen");
+  return issue?.iid ?? 0;
+}
+
+async function closeGitlabIssue(gitlab: Gitlab, projectUrl: string) {
+  const project = await getGitlabProjectIdByUrl(gitlab, projectUrl);
+  if (!project) return;
+  const projectId = project.id;
+  const issueId = await getHomeworkIssueId(gitlab, project);
+  await gitlab.makeRequest<{ candidate: { id: number } }>(
+    `/projects/${projectId}/issues/${issueId}?state_event=close`,
+    {
+      method: "PUT",
+    },
+  );
+}
+
+async function getTestCandidateTasks(
+  recruitee: Recruitee,
+  candidateId: number,
+) {
+  const { tasks } = await recruitee.makeRequest<
+    { tasks: [{ title: string }] }
+  >(
+    `/candidates/${candidateId}/tasks`,
+    {},
+  );
+  return tasks;
+}
+
+async function deleteCandidate(recruitee: Recruitee, candidateId: number) {
+  console.log(`Deleting Test-Candidate with id ${candidateId}`);
+  await recruitee.makeRequest<{ candidate: { id: number } }>(
+    `/candidates/${candidateId}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
