@@ -118,5 +118,5 @@ export type SendMailToCandidateBody = {
 };
 
 export type UpdateProfileFieldSingleLineBody = {
-  field: CandidateSingleLineField;
+  field: unknown; // TODO: -> see TODO below recruitee.ts:updateProfileFieldSingleLine()
 };

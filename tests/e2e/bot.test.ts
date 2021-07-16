@@ -164,12 +164,14 @@ async function createCandidate(recruitee: Recruitee): Promise<number> {
   );
 
   await addTagToCandidate(recruitee, candidate.id);
-  await setTestProfileInformation(
-    recruitee,
-    candidate.id,
-    { text: TEST_CANDIDATE_GITLAB_USER },
+
+  await recruitee.updateProfileFieldSingleLine(
+    candidate,
     getGitlabUsernameFieldOrThrow(recruitee, candidate),
+    [TEST_CANDIDATE_GITLAB_USER],
   );
+
+  // TODO: create and use `recruitee.updateProfileField` to set the Profile field
   await setTestProfileInformation(
     recruitee,
     candidate.id,
@@ -180,10 +182,7 @@ async function createCandidate(recruitee: Recruitee): Promise<number> {
   return candidate.id;
 }
 
-async function addTagToCandidate(
-  recruitee: Recruitee,
-  candidateId: number,
-) {
+async function addTagToCandidate(recruitee: Recruitee, candidateId: number) {
   const body = {
     tag: E2E_CANDIDATE_TAG,
   };
@@ -229,13 +228,10 @@ async function addTaskToTestCandidate(
       title,
     },
   };
-  await recruitee.makeRequest<{ candidate: { id: number } }>(
-    "/tasks",
-    {
-      method: "POST",
-      body,
-    },
-  );
+  await recruitee.makeRequest<{ candidate: { id: number } }>("/tasks", {
+    method: "POST",
+    body,
+  });
 }
 
 async function getGitlabProjectIdByUrl(
@@ -250,10 +246,7 @@ async function getGitlabProjectIdByUrl(
   return project;
 }
 
-async function getHomeworkIssueId(
-  gitlab: Gitlab,
-  project: GitlabProject,
-) {
+async function getHomeworkIssueId(gitlab: Gitlab, project: GitlabProject) {
   const projectId = project.id;
   const issues = await gitlab.makeRequest<[{ title: string; iid: number }]>(
     `/projects/${projectId}/issues`,
@@ -280,9 +273,7 @@ async function getTestCandidateTasks(
   recruitee: Recruitee,
   candidateId: number,
 ) {
-  const { tasks } = await recruitee.makeRequest<
-    { tasks: [{ title: string }] }
-  >(
+  const { tasks } = await recruitee.makeRequest<{ tasks: [{ title: string }] }>(
     `/candidates/${candidateId}/tasks`,
     {},
   );

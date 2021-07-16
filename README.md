@@ -79,3 +79,8 @@ git config --local core.hooksPath .githooks
   error if it's missing.
   [More Info](https://deno.land/x/dotenv@v1.0.1#safe-mode)
 - Please use feature branches to develop new features.
+
+### Hints
+
+- The long documentation of the Recruitee API can be found
+  [here](https://api.recruitee.com/docs/index.html)

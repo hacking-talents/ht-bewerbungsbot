@@ -195,7 +195,10 @@ export default class Recruitee extends HttpClient {
       field.values[0].text = formattedContent[0].text; // FIXME: allow multiple content strings to be entered
     }
 
-    const body = { field: field };
+    const body = {
+      field: { values: field.values, kind: field.kind, name: field.name },
+    };
+    console.log(body);
 
     if (field.id !== null) {
       await this.makeRequest<never, UpdateProfileFieldSingleLineBody>(
@@ -211,6 +214,23 @@ export default class Recruitee extends HttpClient {
       );
     }
   }
+
+  // TODO: Adapt the updateProfileFieldSingleLine() function above into
+  //       a general updateProfileField() function
+  //       and especially into a updateProfileFieldDropdown() function.
+  //
+  //       The updateProfileFieldDropdown() has to include *all* dropdown
+  //       options in its request body as the "options"-parameter.
+  //       Also it's `values`-property has to contain "value"-parameters,
+  //       instead of "text"-parameters, that the `SingleLine`-Fields
+  //       require.
+  //
+  //       This has to be properly typed; maybe with seperate POST and
+  //       PATCH Types for each kind of ProfileField
+  //
+  //       Not necessary more, but _some_ info can be found in the slow
+  //       loading recruitee-API description:
+  //       https://api.recruitee.com/docs/index.html#customfields.web.candidatefield-customfields.web.candidatefield-patch
 
   async clearProfileField(candidate: Candidate, field: CandidateField) {
     if (field.id === undefined) {
