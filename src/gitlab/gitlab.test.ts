@@ -187,6 +187,13 @@ Deno.test(
     const forkProjectStub: Stub<Gitlab> = stub(gitlabInstance, "forkProject", [
       mockProject,
     ]);
+    stub(
+      gitlabInstance,
+      "getBranches",
+      () => [{ name: "master", protected: true, default: true }],
+    );
+    stub(gitlabInstance, "deleteBranch");
+
     const homeworkFork = await gitlabInstance.forkHomework(
       "projectId",
       "repoName",
@@ -225,12 +232,19 @@ Deno.test("forkHomework forks a project, but unprotect fails", async () => {
     gitlabInstance,
     "unprotectAllBranches",
     () => {
-      throw new Error();
+      throw new GitlabError("failed to unprotect branch");
     },
   );
+  stub(
+    gitlabInstance,
+    "getBranches",
+    () => [{ name: "master", protected: true, default: true }],
+  );
+  stub(gitlabInstance, "deleteBranch");
 
   await assertThrowsAsync(
     async () => await gitlabInstance.forkHomework("projectId", "repoName"),
+    GitlabError,
   );
 
   assertEquals(1, waitForForkFinishStub.calls.length);
@@ -251,6 +265,13 @@ Deno.test("forkHomework forks a project but forkProject fails", async () => {
   const forkProjectStub: Stub<Gitlab> = stub(gitlabInstance, "forkProject", [
     undefined,
   ]);
+  stub(
+    gitlabInstance,
+    "getBranches",
+    () => [{ name: "master", protected: true, default: true }],
+  );
+  stub(gitlabInstance, "deleteBranch");
+
   await assertThrowsAsync(
     async () => await gitlabInstance.forkHomework("projectId", "repoName"),
   );
