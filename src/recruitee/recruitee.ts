@@ -158,6 +158,7 @@ export default class Recruitee extends HttpClient {
     candidate_id: number,
     // deno-lint-ignore camelcase
     candidate_email: string,
+    cc: string[],
     sendHomeworkTemplateValues: SendHomeworkTemplateValues,
   ): Promise<void> {
     const homeworkMailContent = sendHomeworkTemplate(
@@ -167,6 +168,7 @@ export default class Recruitee extends HttpClient {
     const body = {
       // deno-lint-ignore camelcase
       body_html: homeworkMailContent,
+      cc,
       subject: sendHomeworkSubject,
       to: [
         {

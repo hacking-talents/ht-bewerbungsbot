@@ -288,11 +288,14 @@ export default class Bot {
     const address = this.recruitee.getCandidateSalutation(candidate);
     const signature = this.recruitee.getSignature(candidate, references);
 
-    const candidateMailAddress = candidate.emails[0]; // TODO: Handle multiple mail addresses
+    const candidateMailAddress = candidate.emails.shift();
+    if (!candidateMailAddress) throw Error(); // TODO: handle case when no email address was provided
+    const optionalMailAddresses = candidate.emails;
 
     await this.recruitee.sendMailToCandidate(
       candidate.id,
       candidateMailAddress,
+      optionalMailAddresses,
       {
         applicantName: address,
         issueUrl: gitlabIssue.web_url,

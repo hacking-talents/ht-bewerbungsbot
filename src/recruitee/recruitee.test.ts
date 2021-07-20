@@ -261,6 +261,7 @@ Deno.test("sendMailToCandidate uses the correct URL and HTTP method", () => {
       await r.sendMailToCandidate(
         candidateId,
         email,
+        [],
         sendHomeworkTemplate,
       );
     },
