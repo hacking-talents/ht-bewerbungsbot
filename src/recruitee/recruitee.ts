@@ -8,6 +8,7 @@ import {
   AddNoteToCandidateBody,
   Candidate,
   CandidateDetails,
+  CandidateDropdownField,
   CandidateField,
   CandidateReference,
   CandidateSingleLineField,
@@ -19,6 +20,7 @@ import {
   StageDetail,
   Task,
   TaskDetails,
+  UpdateProfileFieldDropdownBody,
   UpdateProfileFieldSingleLineBody,
 } from "./types.ts";
 import { RecruiteeError } from "./RecruiteeError.ts";
@@ -180,7 +182,7 @@ export default class Recruitee extends HttpClient {
     });
   }
 
-  async updateProfileFieldSingleLine(
+  private async updateProfileFieldSingleLine(
     candidate: Candidate,
     field: CandidateSingleLineField,
     content: string[],
@@ -192,13 +194,12 @@ export default class Recruitee extends HttpClient {
     if (field.values.length == 0) {
       field.values.push(formattedContent[0]);
     } else {
-      field.values[0].text = formattedContent[0].text; // FIXME: allow multiple content strings to be entered
+      field.values = formattedContent;
     }
 
     const body = {
       field: { values: field.values, kind: field.kind, name: field.name },
     };
-    console.log(body);
 
     if (field.id !== null) {
       await this.makeRequest<never, UpdateProfileFieldSingleLineBody>(
@@ -215,22 +216,59 @@ export default class Recruitee extends HttpClient {
     }
   }
 
-  // TODO: Adapt the updateProfileFieldSingleLine() function above into
-  //       a general updateProfileField() function
-  //       and especially into a updateProfileFieldDropdown() function.
-  //
-  //       The updateProfileFieldDropdown() has to include *all* dropdown
-  //       options in its request body as the "options"-parameter.
-  //       Also it's `values`-property has to contain "value"-parameters,
-  //       instead of "text"-parameters, that the `SingleLine`-Fields
-  //       require.
-  //
-  //       This has to be properly typed; maybe with seperate POST and
-  //       PATCH Types for each kind of ProfileField
-  //
-  //       Not necessary more, but _some_ info can be found in the slow
-  //       loading recruitee-API description:
-  //       https://api.recruitee.com/docs/index.html#customfields.web.candidatefield-customfields.web.candidatefield-patch
+  private async updateProfileFieldDropdown(
+    candidate: Candidate,
+    field: CandidateDropdownField,
+    content: string[],
+  ) {
+    const formattedContent = content.map((item) => {
+      return { value: item };
+    });
+
+    if (field.values.length == 0) {
+      field.values.push(formattedContent[0]);
+    } else {
+      field.values = formattedContent;
+    }
+
+    const body = {
+      field: field,
+    };
+
+    if (field.id !== null) {
+      await this.makeRequest<never, UpdateProfileFieldDropdownBody>(
+        `/custom_fields/candidates/${candidate.id.toString()}/fields/${
+          field.id?.toString()
+        }`,
+        { method: "PATCH", body },
+      );
+    } else {
+      await this.makeRequest<never, UpdateProfileFieldDropdownBody>(
+        `/custom_fields/candidates/${candidate.id.toString()}/fields`,
+        { method: "POST", body },
+      );
+    }
+  }
+
+  async updateProfileField(
+    candidate: Candidate,
+    field: CandidateField,
+    content: string[],
+  ) {
+    if (field.kind === "single_line") {
+      await this.updateProfileFieldSingleLine(
+        candidate,
+        field as CandidateSingleLineField,
+        content,
+      );
+    } else {
+      await this.updateProfileFieldDropdown(
+        candidate,
+        field as CandidateDropdownField,
+        content,
+      );
+    }
+  }
 
   async clearProfileField(candidate: Candidate, field: CandidateField) {
     if (field.id === undefined) {

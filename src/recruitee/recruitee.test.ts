@@ -7,6 +7,7 @@ import { Stub, stub } from "https://deno.land/x/mock@v0.9.5/mod.ts";
 import {
   Candidate,
   CandidateBooleanField,
+  CandidateDropdownField,
   CandidateField,
   CandidateReference,
   CandidateSingleLineField,
@@ -269,7 +270,7 @@ Deno.test("sendMailToCandidate uses the correct URL and HTTP method", () => {
 });
 
 Deno.test(
-  "updateProfileFieldSingleLine adds a new line and uses the correct URL and HTTP method",
+  "updateProfileField adds a new single line field and uses the correct URL and HTTP method",
   () => {
     const mockedCandidate = mockCandidate();
     const candidateId = mockedCandidate.id;
@@ -289,7 +290,7 @@ Deno.test(
       },
       async () => {
         const r = recruitee();
-        await r.updateProfileFieldSingleLine(
+        await r.updateProfileField(
           mockedCandidate,
           mockedCandidateSingleLineField,
           content,
@@ -300,7 +301,7 @@ Deno.test(
 );
 
 Deno.test(
-  "updateProfileFieldSingleLine adds a new line and uses the correct URL and HTTP method",
+  "updateProfileField adds a new single line field and uses the correct URL and HTTP method",
   () => {
     const mockedCandidate = mockCandidate();
     const candidateId = mockedCandidate.id;
@@ -320,7 +321,7 @@ Deno.test(
       },
       async () => {
         const r = recruitee();
-        await r.updateProfileFieldSingleLine(
+        await r.updateProfileField(
           mockedCandidate,
           mockedCandidateSingleLineField,
           content,
@@ -331,7 +332,7 @@ Deno.test(
 );
 
 Deno.test(
-  "updateProfileFieldSingleLine adds a new line and uses the correct URL and HTTP method when no fields are provided",
+  "updateProfileField adds a new single line field and uses the correct URL and HTTP method when no fields are provided",
   () => {
     const mockedCandidate = mockCandidate();
     const candidateId = mockedCandidate.id;
@@ -352,9 +353,41 @@ Deno.test(
       },
       async () => {
         const r = recruitee();
-        await r.updateProfileFieldSingleLine(
+        await r.updateProfileField(
           mockedCandidate,
           mockedCandidateSingleLineField,
+          content,
+        );
+      },
+    );
+  },
+);
+
+Deno.test(
+  "updateProfileField adds a new dropdown field value and uses the correct URL and HTTP method",
+  () => {
+    const mockedCandidate = mockCandidate();
+    const candidateId = mockedCandidate.id;
+    const mockedCandidateDropdownField = mockCandidateDropdownField(
+      123,
+      [],
+    );
+    const content = ["Swapgate"];
+
+    withMockedFetch(
+      (input, init) => {
+        assertEquals(
+          input,
+          `${Recruitee.BASE_URL}/companyId/custom_fields/candidates/${candidateId}/fields/${mockedCandidateDropdownField.id}`,
+        );
+        assertEquals(init?.method, "PATCH");
+        return new Response();
+      },
+      async () => {
+        const r = recruitee();
+        await r.updateProfileField(
+          mockedCandidate,
+          mockedCandidateDropdownField,
           content,
         );
       },
@@ -805,6 +838,24 @@ function mockCandidateField(id: number | null | undefined): CandidateField {
     name: "",
     id: id,
     kind: "single_line",
+  };
+}
+
+function mockCandidateDropdownField(
+  id: number | null | undefined,
+  values: string[],
+): CandidateDropdownField {
+  return {
+    ...mockCandidateField(id),
+    kind: "dropdown",
+    options: {
+      values: [
+        "Test",
+      ],
+    },
+    values: values.map((value) => {
+      return { value: value };
+    }),
   };
 }
 

@@ -18,7 +18,6 @@ import Recruitee from "../../src/recruitee/recruitee.ts";
 import {
   Candidate,
   CandidateDropdownField,
-  CandidateField,
   CandidateSingleLineField,
 } from "../../src/recruitee/types.ts";
 import Gitlab from "../../src/gitlab/gitlab.ts";
@@ -165,18 +164,17 @@ async function createCandidate(recruitee: Recruitee): Promise<number> {
 
   await addTagToCandidate(recruitee, candidate.id);
 
-  await recruitee.updateProfileFieldSingleLine(
+  await recruitee.updateProfileField(
     candidate,
     getGitlabUsernameFieldOrThrow(recruitee, candidate),
     [TEST_CANDIDATE_GITLAB_USER],
   );
 
   // TODO: create and use `recruitee.updateProfileField` to set the Profile field
-  await setTestProfileInformation(
-    recruitee,
-    candidate.id,
-    { value: TEST_HOMEWORK },
+  await recruitee.updateProfileField(
+    candidate,
     getHomeworkFieldOrThrow(recruitee, candidate),
+    [TEST_HOMEWORK],
   );
   await addTaskToTestCandidate(recruitee, candidate.id, "Hausaufgabe");
   return candidate.id;
@@ -188,28 +186,6 @@ async function addTagToCandidate(recruitee: Recruitee, candidateId: number) {
   };
   await recruitee.makeRequest<{ candidate: { id: number } }>(
     `/candidates/${candidateId}/tags`,
-    {
-      method: "POST",
-      body,
-    },
-  );
-}
-
-async function setTestProfileInformation(
-  recruitee: Recruitee,
-  candidateId: number,
-  values: unknown,
-  field?: CandidateField,
-) {
-  if (!field) return;
-  const body = {
-    field: {
-      ...field,
-      values: [values],
-    },
-  };
-  await recruitee.makeRequest<{ candidate: { id: number } }>(
-    `/custom_fields/candidates/${candidateId}/fields/`,
     {
       method: "POST",
       body,

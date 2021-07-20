@@ -368,7 +368,7 @@ export default class Bot {
       );
     }
 
-    await this.recruitee.updateProfileFieldSingleLine(candidate, repoField, [
+    await this.recruitee.updateProfileField(candidate, repoField, [
       content,
     ]);
   }
