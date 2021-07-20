@@ -170,7 +170,6 @@ async function createCandidate(recruitee: Recruitee): Promise<number> {
     [TEST_CANDIDATE_GITLAB_USER],
   );
 
-  // TODO: create and use `recruitee.updateProfileField` to set the Profile field
   await recruitee.updateProfileField(
     candidate,
     getHomeworkFieldOrThrow(recruitee, candidate),
