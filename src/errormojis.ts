@@ -6,4 +6,5 @@ export enum EmojiErrorCodes {
   FORK_FAILED = "🍴", // A literal fork
   MISSING_CANDIDATE_FIELD = "🌾", // "No field as far as the eye can see"
   PIPELINE_STAGE_NOT_FOUND = "🎤", // "Would you please come on stage?"
+  EMAIL_NOT_FOUND = "📧", // "Final Destination Unknown"
 }

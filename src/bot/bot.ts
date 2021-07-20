@@ -226,7 +226,7 @@ export default class Bot {
         gitlabIssue,
         gitlabFork,
         addDaysToDate(dueDate, -1),
-      );
+      ).catch((error) => this.handleError(error, candidate));
     }
 
     if (this.deleteProjectInTheEnd) {
@@ -289,7 +289,11 @@ export default class Bot {
     const signature = this.recruitee.getSignature(candidate, references);
 
     const candidateMailAddress = candidate.emails.shift();
-    if (!candidateMailAddress) throw Error(); // TODO: handle case when no email address was provided
+    if (!candidateMailAddress) {
+      throw new RecruiteeError(
+        `${EmojiErrorCodes.MISSING_CANDIDATE_FIELD} Es wurde keine Emailadresse gefunden.`,
+      );
+    }
     const optionalMailAddresses = candidate.emails;
 
     await this.recruitee.sendMailToCandidate(
