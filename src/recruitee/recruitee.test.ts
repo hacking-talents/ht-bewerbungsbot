@@ -249,7 +249,6 @@ Deno.test(
 Deno.test("sendMailToCandidate uses the correct URL and HTTP method", () => {
   const candidateId = 5;
   const email = "peterle@sipgate.de";
-  const subject = "Application";
   const sendHomeworkTemplate = mockSendHomeworkTemplateValues();
   withMockedFetch(
     (input, init) => {
@@ -262,7 +261,6 @@ Deno.test("sendMailToCandidate uses the correct URL and HTTP method", () => {
       await r.sendMailToCandidate(
         candidateId,
         email,
-        subject,
         sendHomeworkTemplate,
       );
     },

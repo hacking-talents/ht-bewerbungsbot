@@ -1,6 +1,7 @@
 import { isBooleanField, isSingleLineField } from "./tools.ts";
 import HttpClient from "../http/http.ts";
 import {
+  sendHomeworkSubject,
   sendHomeworkTemplate,
   SendHomeworkTemplateValues,
 } from "../messages.ts";
@@ -157,7 +158,6 @@ export default class Recruitee extends HttpClient {
     candidate_id: number,
     // deno-lint-ignore camelcase
     candidate_email: string,
-    subject: string, // TODO: extract subject into Mail-templates
     sendHomeworkTemplateValues: SendHomeworkTemplateValues,
   ): Promise<void> {
     const homeworkMailContent = sendHomeworkTemplate(
@@ -167,7 +167,7 @@ export default class Recruitee extends HttpClient {
     const body = {
       // deno-lint-ignore camelcase
       body_html: homeworkMailContent,
-      subject,
+      subject: sendHomeworkSubject,
       to: [
         {
           candidate_id,

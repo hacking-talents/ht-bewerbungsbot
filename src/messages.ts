@@ -7,6 +7,8 @@ export interface SendHomeworkTemplateValues {
   homeworkDueDate: Date;
 }
 
+export const sendHomeworkSubject = "sipgate Hausaufgabe";
+
 export const sendHomeworkTemplate = (values: SendHomeworkTemplateValues) =>
   `<p>Hallo ${values.applicantName},</p>
 

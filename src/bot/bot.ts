@@ -293,7 +293,6 @@ export default class Bot {
     await this.recruitee.sendMailToCandidate(
       candidate.id,
       candidateMailAddress,
-      "sipgate Hausaufgabe", // TODO: Extract subject to messages file
       {
         applicantName: address,
         issueUrl: gitlabIssue.web_url,
