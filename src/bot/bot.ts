@@ -269,7 +269,7 @@ export default class Bot {
 
     const localizedDueDate = dueDate.toLocaleDateString(
       "de-DE",
-      { weekday: "long", day: "numeric", month: "long" }, // FIXME: locale Date is not correctly printed
+      { weekday: "long", day: "numeric", month: "long" },
     );
 
     await this.recruitee.addNoteToCandidate(
