@@ -48,14 +48,25 @@ export default class Bot {
   }
 
   async poll() {
-    let candidates = await this.recruitee.getAllQualifiedCandidates();
-    candidates = candidates.filter(
-      async (candidate) =>
-        this.candidateHasRequiredTag(candidate) &&
-        (await this.hasUnfinishedErrorTask(candidate)),
+    const candidates = await this.recruitee.getAllQualifiedCandidates();
+
+    const candidatesWithRequiredTag = candidates.filter(
+      (candidate: Candidate) => {
+        return this.candidateHasRequiredTag(candidate);
+      },
     );
-    await this.sendAllPendingHomeworks(candidates).catch(console.warn);
-    await this.checkForClosedIssues(candidates).catch(console.warn);
+
+    const candidatesWithoutUnfinishedErrorTask = candidatesWithRequiredTag
+      .filter(
+        async (candidate) => await this.hasUnfinishedErrorTask(candidate),
+      );
+
+    await this.sendAllPendingHomeworks(
+      candidatesWithoutUnfinishedErrorTask,
+    ).catch(console.warn);
+    await this.checkForClosedIssues(candidatesWithoutUnfinishedErrorTask).catch(
+      console.warn,
+    );
 
     await this.monitorer.signalSuccess();
   }
