@@ -29,7 +29,7 @@ import { GitlabProject } from "../../src/gitlab/types.ts";
 import Bot from "../../src/bot/bot.ts";
 import Monitorer from "../../src/monitoring/monitorer.ts";
 
-const E2E_CANDIDATE_TAG = "Bot-Test";
+const E2E_CANDIDATE_TAG = "Bot-E2E-Test";
 
 const {
   GITLAB_TOKEN,
