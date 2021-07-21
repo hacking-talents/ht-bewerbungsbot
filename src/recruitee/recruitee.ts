@@ -368,6 +368,12 @@ export default class Recruitee extends HttpClient {
       return offer.id == offerId;
     });
 
+    if (!offer) {
+      throw new RecruiteeError(
+        `${EmojiErrorCodes.OFFER_NOT_FOUND} Job-Offer mit ID ${offerId} nicht gefunden.`,
+      );
+    }
+
     const matchedStage = offer?.pipeline_template.stages.find(
       (stage: StageDetail) => {
         const searchedName = stageName.replace(/ /g, "").toLowerCase();

@@ -5,6 +5,7 @@ export enum EmojiErrorCodes {
   PROJECT_NOT_FOUND = "📂", // Empty folder has no projects in it
   FORK_FAILED = "🍴", // A literal fork
   MISSING_CANDIDATE_FIELD = "🌾", // "No field as far as the eye can see"
-  PIPELINE_STAGE_NOT_FOUND = "🎤", // "Would you please come on stage?"
+  PIPELINE_STAGE_NOT_FOUND = "🎤", // "Would you please come on stage?",
+  OFFER_NOT_FOUND = "👔", // TODO: add catchy comment
   EMAIL_NOT_FOUND = "📧", // "Final Destination Unknown"
 }

@@ -719,6 +719,61 @@ Deno.test("getStageByName returns correct stages", () => {
   );
 });
 
+Deno.test("getStageByName throws an exception when offer id is not found", () => {
+  const stageName = "Homework sent";
+  const offerId = 1212;
+
+  const mockedOffers = [
+    mockOffer(
+      41414,
+      "1",
+      ["Fachinformatiker"],
+      [
+        { id: 5, name: stageName },
+        { id: 7, name: "Invited to interview" },
+        { id: 8, name: "Quatsch" },
+      ],
+    ),
+    mockOffer(
+      70973,
+      "2",
+      ["Fachinformatiker"],
+      [{ id: 7, name: "Invited to interview" }],
+    ),
+    mockOffer(
+      546345734,
+      "3",
+      ["Fachinformatiker"],
+      [
+        { id: 5, name: stageName },
+        { id: 7, name: "Invited to interview" },
+      ],
+    ),
+  ];
+
+  withMockedFetch(
+    (input, init) => {
+      assertEquals(
+        input,
+        `${Recruitee.BASE_URL}/companyId/offers?scope=not_archived&view_mode=default`,
+      );
+      assertEquals(init?.method, "GET");
+      return new Response(
+        JSON.stringify({
+          offers: mockedOffers,
+        }),
+      );
+    },
+    async () => {
+      const r = recruitee();
+      await assertThrowsAsync(async () => {
+        const actual = await r.getStageByName(stageName, offerId);
+        assertEquals(actual, { id: 5, name: "Homework sent" });
+      });
+    },
+  );
+});
+
 Deno.test(
   "getAllQualifiedCandidates returns a list of qualified candidates",
   async () => {

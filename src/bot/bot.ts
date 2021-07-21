@@ -107,13 +107,16 @@ export default class Bot {
         candidates.map(async (candidate) => {
           for (const placement of candidate.placements) {
             if (!placement.stage_id) continue;
-
-            const stage = await this.recruitee.getStageByName(
-              HOMEWORK_SENT_STAGE_TITLE,
-              placement.offer_id,
-            );
-            if (placement.stage_id == stage.id) {
-              return candidate;
+            try {
+              const stage = await this.recruitee.getStageByName(
+                HOMEWORK_SENT_STAGE_TITLE,
+                placement.offer_id,
+              );
+              if (placement.stage_id == stage.id) {
+                return candidate;
+              }
+            } catch (e) {
+              this.handleError(e, candidate);
             }
           }
         }),
