@@ -108,7 +108,6 @@ describe("End-to-end test for HT-Bewerbungsbot", () => {
     }),
   );
 
-  // TODO: fix error handling to catch exceptions in E2E tests
   function deleteCandidateOnException(fn: () => Promise<void>): () => void {
     return async () => {
       try {
@@ -116,14 +115,12 @@ describe("End-to-end test for HT-Bewerbungsbot", () => {
       } catch (e) {
         console.log("E2E Test failed! Deleting candidate...");
         console.log(e);
-        try {
-          await deleteCandidate(recruitee, candidateId);
-        } catch (e_) {
-          console.log(e_);
-          console.log(
+        await deleteCandidate(recruitee, candidateId).catch((err) =>
+          console.error(
             "Candidate deletion failed. Please delete candidate manually.",
-          );
-        }
+            err,
+          )
+        );
       }
     };
   }
