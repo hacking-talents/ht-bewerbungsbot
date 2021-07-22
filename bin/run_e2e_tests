@@ -1,0 +1,4 @@
+ #!/usr/bin/env sh
+ 
+ deno test --allow-read --allow-net --allow-env tests/e2e
+ curl --retry 3 https://hc-ping.com/$E2E_HEALTHCHECKS_UUID/$?
