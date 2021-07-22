@@ -73,12 +73,17 @@ describe("End-to-end test for HT-Bewerbungsbot", () => {
   });
 
   afterAll(async () => {
-    await deleteCandidate(recruitee, candidateId);
+    await deleteCandidate(recruitee, candidateId).catch((err) =>
+      console.error(
+        "Candidate deletion failed. Please delete candidate manually.",
+        err,
+      )
+    );
   });
 
   it(
     "checks that a homework is forked and the 'GitLab Repository' field is correctly set",
-    deleteCandidateOnException(async () => {
+    async () => {
       await bot.poll();
 
       const candidate = await recruitee.getCandidateById(candidateId);
@@ -87,12 +92,12 @@ describe("End-to-end test for HT-Bewerbungsbot", () => {
         candidate,
       );
       assertNotEquals(gitlabRepoUrl, "");
-    }),
+    },
   );
 
   it(
     "checks that a task is added to the Recruitee profile",
-    deleteCandidateOnException(async () => {
+    async () => {
       const candidate = await recruitee.getCandidateById(candidateId);
       const gitlabRepoUrl = getGitlabRepoFieldValueOrThrow(
         recruitee,
@@ -105,25 +110,8 @@ describe("End-to-end test for HT-Bewerbungsbot", () => {
       const tasks = await getTestCandidateTasks(recruitee, candidateId);
       const mkTask = tasks.find((t) => t.title == TASK_ASSIGN_MK_TEXT);
       assertExists(mkTask);
-    }),
+    },
   );
-
-  function deleteCandidateOnException(fn: () => Promise<void>): () => void {
-    return async () => {
-      try {
-        await fn();
-      } catch (e) {
-        console.log("E2E Test failed! Deleting candidate...");
-        console.log(e);
-        await deleteCandidate(recruitee, candidateId).catch((err) =>
-          console.error(
-            "Candidate deletion failed. Please delete candidate manually.",
-            err,
-          )
-        );
-      }
-    };
-  }
 });
 
 function getGitlabRepoFieldValueOrThrow(
