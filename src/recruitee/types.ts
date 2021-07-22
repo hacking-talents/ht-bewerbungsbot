@@ -117,9 +117,9 @@ export type SendMailToCandidateBody = {
 };
 
 export type UpdateProfileFieldSingleLineBody = {
-  field: unknown;
+  field: unknown; // TODO: add correct type
 };
 
 export type UpdateProfileFieldDropdownBody = {
-  field: unknown;
+  field: unknown; // TODO: add correct type
 };
