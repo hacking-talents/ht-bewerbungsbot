@@ -559,7 +559,40 @@ Deno.test(
   },
 );
 
-// TODO: "getClosedProjectIssues also queries for author when given"
+Deno.test("getClosedProjectIssues also queries for author when given", async () => {
+  const issue: Issue = {
+    title: "Know something",
+    author: {
+      id: 1234,
+      name: "Igritte",
+      username: "redwildling",
+    },
+    assignee: {
+      id: 13,
+      name: "Jon Snow",
+      username: "whitewolf",
+    },
+    web_url: "",
+  };
+
+  await withMockedFetch(
+    (input, init) => {
+      assertEquals(
+        input,
+        `${Gitlab.API_BASE_URL}/projects/projectId/issues?state=closed&author_id=${issue.author.id}`,
+      );
+      assertEquals(init?.method, "GET");
+      return new Response(JSON.stringify([issue]));
+    },
+    async () => {
+      const response = await gitlab().getClosedProjectIssues(
+        "projectId",
+        issue.author,
+      );
+      assertEquals(response, [issue]);
+    },
+  );
+});
 
 Deno.test("getClosedProjectIssues can return no issues", async () => {
   await withMockedFetch(

@@ -117,7 +117,7 @@ export type SendMailToCandidateBody = {
 };
 
 export type UpdateProfileFieldSingleLineBody = {
-  field: unknown; // TODO: -> see TODO below recruitee.ts:updateProfileFieldSingleLine()
+  field: unknown;
 };
 
 export type UpdateProfileFieldDropdownBody = {
