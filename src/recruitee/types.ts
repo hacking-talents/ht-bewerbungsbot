@@ -106,7 +106,6 @@ export type CompleteTaskBody = {
 
 export type AddNoteToCandidateBody = {
   note: {
-    id: null;
     body: string;
   };
 };

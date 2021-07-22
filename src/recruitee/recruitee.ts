@@ -129,7 +129,6 @@ export default class Recruitee extends HttpClient {
         method: "POST",
         body: {
           note: {
-            id: null,
             body: message,
           },
         },
