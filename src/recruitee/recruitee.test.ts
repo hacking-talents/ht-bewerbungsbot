@@ -70,24 +70,37 @@ Deno.test("getAllCandidatesForOffers makes correct api call", () => {
 
   withMockedFetch(
     (input, init) => {
-      assertEquals(
-        input,
-        `${Recruitee.BASE_URL}/companyId/candidates?qualified=true&offers=[123,1234]`,
-      );
-      assertEquals(init?.method, "GET");
+      const offerSearchExpression = /offer_id=(?<offer_id>\d+)/;
+      const offerIdsFound = input.toString().match(offerSearchExpression);
 
-      return new Response(
-        JSON.stringify({
-          candidates,
-        }),
-      );
+      if (offerIdsFound && offerIdsFound?.length > 1) {
+        const offerId = offerIdsFound[1];
+
+        assertEquals(
+          input,
+          `${Recruitee.BASE_URL}/companyId/candidates?qualified=true&offer_id=${offerId}`,
+        );
+        assertEquals(init?.method, "GET");
+
+        switch (offerId) {
+          case "123":
+            return new Response(
+              JSON.stringify({ candidates: [candidates[0]] }),
+            );
+          case "456":
+            return new Response(
+              JSON.stringify({ candidates: [candidates[1]] }),
+            );
+        }
+      }
+      return new Response(JSON.stringify({}));
     },
     async () => {
       const r = recruitee();
-      const offers: Offer[] = [mockOffer(123, "1"), mockOffer(1234, "2")];
-      const response = await r.getAllCandidatesForOffers(offers);
+      const offers: Offer[] = [mockOffer(123, "1"), mockOffer(456, "2")];
+      const actual = await r.getAllCandidatesForOffers(offers);
 
-      assertEquals(response, candidates);
+      assertEquals(actual, candidates);
     },
   );
 });

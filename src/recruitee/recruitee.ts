@@ -49,20 +49,32 @@ export default class Recruitee extends HttpClient {
     });
     if (offers.length === 0) {
       throw new RecruiteeError(
-        `Keine Jobangebote mit dem Tag "${OFFER_BOT_TAG}" gefunden`,
+        `Keine Jobangebote mit dem Tag "${tag}" gefunden`,
       );
     }
+
     return offers;
   }
 
   async getAllCandidatesForOffers(
     offers: Offer[],
   ): Promise<MinimalCandidate[]> {
-    const response = await this.makeRequest<{ candidates: MinimalCandidate[] }>(
-      `/candidates?qualified=true&offers=[${offers.map((offer) => offer.id)}]`,
+    const responses = await Promise.all(
+      offers.map(
+        async (offer) =>
+          await this.makeRequest<{ candidates: MinimalCandidate[] }>(
+            `/candidates?qualified=true&offer_id=${offer.id}`,
+          ),
+      ),
     );
 
-    return response.candidates;
+    let allCandidates: MinimalCandidate[] = [];
+
+    responses.forEach((response) => {
+      allCandidates = allCandidates.concat(response.candidates);
+    });
+
+    return allCandidates;
   }
 
   async getCandidateTasks(candidateId: number): Promise<Task[]> {

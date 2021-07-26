@@ -136,8 +136,8 @@ export default class Bot {
     let project;
     try {
       project = await this.getProjectByCandidate(candidate);
-    } catch (_) {
-      console.warn("No project URL field found in candidate profile.");
+    } catch (e) {
+      console.warn(e.message);
       return;
     }
     const botGitlabUser = await this.gitlab.getOwnUserInfo();
@@ -182,7 +182,11 @@ export default class Bot {
         splittedPath[splittedPath.length - 1],
       );
     } else {
-      throw Error("No project candidate field found");
+      throw Error(
+        `No project-field found for candidate with id ${candidate.id} in offer ${
+          candidate.placements[0].offer_id
+        }`,
+      );
     }
   }
 
