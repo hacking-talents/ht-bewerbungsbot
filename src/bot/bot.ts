@@ -67,6 +67,8 @@ export default class Bot {
     await this.checkForClosedIssues(candidatesWithoutUnfinishedErrorTask).catch(
       console.warn,
     );
+    // TODO: Assign Tasks for personel-team, when candidates are moved to "hired"-stage
+    // see [Issue #5](https://github.com/hacking-talents/ht-bewerbungsbot/issues/5)
 
     await this.monitorer.signalSuccess();
   }
@@ -294,7 +296,9 @@ export default class Bot {
     await this.recruitee.addNoteToCandidate(
       candidate.id,
       `📤  Hausaufgabe \"${homework}\" versendet. Fällig am ${localizedDueDate}.`,
-    ); // TODO: include more info in log message (in a form of a checklist)
+    );
+
+    // TODO: Create additional Tasks, that need to be done. See [Issue #6](https://github.com/hacking-talents/ht-bewerbungsbot/issues/6)
   }
 
   private async notifyCandidate(
