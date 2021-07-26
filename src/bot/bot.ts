@@ -285,10 +285,11 @@ export default class Bot {
       "Hausaufgabe versendet",
     );
 
-    const localizedDueDate = dueDate.toLocaleDateString(
-      "de-DE",
-      { weekday: "long", day: "numeric", month: "long" },
-    );
+    const localizedDueDate = dueDate.toLocaleDateString("de-DE", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
 
     await this.recruitee.addNoteToCandidate(
       candidate.id,
@@ -392,9 +393,7 @@ export default class Bot {
       );
     }
 
-    await this.recruitee.updateProfileField(candidate, repoField, [
-      content,
-    ]);
+    await this.recruitee.updateProfileField(candidate, repoField, [content]);
   }
 
   private getGitlabUsername(candidate: Candidate): string {

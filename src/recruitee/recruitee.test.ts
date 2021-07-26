@@ -271,12 +271,7 @@ Deno.test("sendMailToCandidate uses the correct URL and HTTP method", () => {
     },
     async () => {
       const r = recruitee();
-      await r.sendMailToCandidate(
-        candidateId,
-        email,
-        [],
-        sendHomeworkTemplate,
-      );
+      await r.sendMailToCandidate(candidateId, email, [], sendHomeworkTemplate);
     },
   );
 });
@@ -380,10 +375,7 @@ Deno.test(
   () => {
     const mockedCandidate = mockCandidate();
     const candidateId = mockedCandidate.id;
-    const mockedCandidateDropdownField = mockCandidateDropdownField(
-      123,
-      [],
-    );
+    const mockedCandidateDropdownField = mockCandidateDropdownField(123, []);
     const content = ["Swapgate"];
 
     withMockedFetch(
@@ -732,60 +724,63 @@ Deno.test("getStageByName returns correct stages", () => {
   );
 });
 
-Deno.test("getStageByName throws an exception when offer id is not found", () => {
-  const stageName = "Homework sent";
-  const offerId = 1212;
+Deno.test(
+  "getStageByName throws an exception when offer id is not found",
+  () => {
+    const stageName = "Homework sent";
+    const offerId = 1212;
 
-  const mockedOffers = [
-    mockOffer(
-      41414,
-      "1",
-      ["Fachinformatiker"],
-      [
-        { id: 5, name: stageName },
-        { id: 7, name: "Invited to interview" },
-        { id: 8, name: "Quatsch" },
-      ],
-    ),
-    mockOffer(
-      70973,
-      "2",
-      ["Fachinformatiker"],
-      [{ id: 7, name: "Invited to interview" }],
-    ),
-    mockOffer(
-      546345734,
-      "3",
-      ["Fachinformatiker"],
-      [
-        { id: 5, name: stageName },
-        { id: 7, name: "Invited to interview" },
-      ],
-    ),
-  ];
+    const mockedOffers = [
+      mockOffer(
+        41414,
+        "1",
+        ["Fachinformatiker"],
+        [
+          { id: 5, name: stageName },
+          { id: 7, name: "Invited to interview" },
+          { id: 8, name: "Quatsch" },
+        ],
+      ),
+      mockOffer(
+        70973,
+        "2",
+        ["Fachinformatiker"],
+        [{ id: 7, name: "Invited to interview" }],
+      ),
+      mockOffer(
+        546345734,
+        "3",
+        ["Fachinformatiker"],
+        [
+          { id: 5, name: stageName },
+          { id: 7, name: "Invited to interview" },
+        ],
+      ),
+    ];
 
-  withMockedFetch(
-    (input, init) => {
-      assertEquals(
-        input,
-        `${Recruitee.BASE_URL}/companyId/offers?scope=not_archived&view_mode=default`,
-      );
-      assertEquals(init?.method, "GET");
-      return new Response(
-        JSON.stringify({
-          offers: mockedOffers,
-        }),
-      );
-    },
-    async () => {
-      const r = recruitee();
-      await assertThrowsAsync(async () => {
-        const actual = await r.getStageByName(stageName, offerId);
-        assertEquals(actual, { id: 5, name: "Homework sent" });
-      });
-    },
-  );
-});
+    withMockedFetch(
+      (input, init) => {
+        assertEquals(
+          input,
+          `${Recruitee.BASE_URL}/companyId/offers?scope=not_archived&view_mode=default`,
+        );
+        assertEquals(init?.method, "GET");
+        return new Response(
+          JSON.stringify({
+            offers: mockedOffers,
+          }),
+        );
+      },
+      async () => {
+        const r = recruitee();
+        await assertThrowsAsync(async () => {
+          const actual = await r.getStageByName(stageName, offerId);
+          assertEquals(actual, { id: 5, name: "Homework sent" });
+        });
+      },
+    );
+  },
+);
 
 Deno.test(
   "getAllQualifiedCandidates returns a list of qualified candidates",
@@ -916,9 +911,7 @@ function mockCandidateDropdownField(
     ...mockCandidateField(id),
     kind: "dropdown",
     options: {
-      values: [
-        "Test",
-      ],
+      values: ["Test"],
     },
     values: values.map((value) => {
       return { value: value };
