@@ -165,6 +165,10 @@ export default class Bot {
       TASK_ASSIGN_MK_TEXT,
       Deno.env.get("RECRUITEE_HR_ID"),
     );
+    await this.recruitee.addNoteToCandidate(
+      candidate.id,
+      "📥 Hausaufgabe eingegangen.",
+    );
   }
 
   private async getProjectByCandidate(candidate: Candidate) {
