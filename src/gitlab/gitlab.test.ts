@@ -559,6 +559,25 @@ Deno.test(
   },
 );
 
+Deno.test(
+  "getClosedProjectIssues fails API call",
+  async () => {
+    await withMockedFetch(
+      (input, init) => {
+        assertEquals(
+          input,
+          `${Gitlab.API_BASE_URL}/projects/projectId/issues?state=closed`,
+        );
+        assertEquals(init?.method, "GET");
+        return new Response(JSON.stringify({}), { status: 500 });
+      },
+      async () => {
+        await assertThrowsAsync(() => gitlab().getClosedProjectIssues("Test"));
+      },
+    );
+  },
+);
+
 Deno.test("getClosedProjectIssues also queries for author when given", async () => {
   const issue: Issue = {
     title: "Know something",

@@ -136,19 +136,21 @@ export default class Bot {
 
   private async handleClosedCandidateIssues(candidate: Candidate) {
     let project;
+    let botGitlabUser;
+    let closedIssuesByBot;
     try {
       project = await this.getProjectByCandidate(candidate);
+      botGitlabUser = await this.gitlab.getOwnUserInfo();
+      closedIssuesByBot = await this.gitlab.getClosedProjectIssues(
+        project.id,
+        botGitlabUser,
+      );
     } catch (e) {
       console.warn(e.message);
       return;
     }
-    const botGitlabUser = await this.gitlab.getOwnUserInfo();
-    const closedIssuesByBot = await this.gitlab.getClosedProjectIssues(
-      project.id,
-      botGitlabUser,
-    );
 
-    if (closedIssuesByBot.length < 1) {
+    if (!closedIssuesByBot || closedIssuesByBot.length < 1) {
       return;
     }
     if (closedIssuesByBot.length > 1) {
