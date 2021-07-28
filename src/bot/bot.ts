@@ -16,6 +16,7 @@ import { RecruiteeError } from "../recruitee/RecruiteeError.ts";
 import Monitorer from "../monitoring/monitorer.ts";
 
 const HOMEWORK_TASK_TITLE = "hausaufgabe";
+const HOMEWORK_EXTENSION_TITLE = "Abgabe verschieben";
 const ERROR_TASK_TITLE = "Fehler fixen";
 const HOMEWORK_SENT_STAGE_TITLE = "Hausaufgabe versendet";
 const HOMEWORK_RECEIVED_STAGE_TITLE = "Hausaufgabe erhalten";
@@ -64,13 +65,65 @@ export default class Bot {
     await this.sendAllPendingHomeworks(
       candidatesWithoutUnfinishedErrorTask,
     ).catch(console.warn);
+
     await this.checkForClosedIssues(candidatesWithoutUnfinishedErrorTask).catch(
       console.warn,
     );
-    // TODO: Assign Tasks for personel-team, when candidates are moved to "hired"-stage
-    // see [Issue #5](https://github.com/hacking-talents/ht-bewerbungsbot/issues/5)
+
+    await this.extendAllHomeworks(candidatesWithoutUnfinishedErrorTask).catch(
+      console.warn,
+    );
 
     await this.monitorer.signalSuccess();
+  }
+
+  // TODO: Assign Tasks for personel-team, when candidates are moved to "hired"-stage
+  // see [Issue #5](https://github.com/hacking-talents/ht-bewerbungsbot/issues/5)
+
+  private async extendAllHomeworks(candidates: Candidate[]) {
+    await Promise.all(
+      candidates.map((candidate) =>
+        this.extendHomework(candidate).catch((error) =>
+          this.handleError(error, candidate)
+        )
+      ),
+    );
+  }
+
+  private async extendHomework(candidate: Candidate) {
+    const homeworkExtensionTask = await this.getHomeworkExtensionTask(
+      candidate,
+    );
+    if (!homeworkExtensionTask) {
+      return;
+    }
+
+    // TODO: get old due date from gitlab issue ( AND from repository access )
+    const project = await this.getProjectByCandidate(candidate);
+    // const botGitlabUser = await this.gitlab.getOwnUserInfo();
+    const projectIssues = await this.gitlab.getProjectIssues(
+      project.id,
+      "opened",
+    );
+    console.log("projectIssuesTest: " + projectIssues + "\n\n\n\n");
+    //const oldDueDate = projectIssues.
+
+    // TODO: if true, check if date has been set manually. If not set extension time to 7 days.
+    // const newDueDate = this.calculateDueDateFromTask(homeworkExtensionTask);
+    // TODO:  Bot changes gitlab issue due date
+
+    // TODO:  Bot extends gitlab repo access date
+    // TODO:  Bot pushes new due date to Recruitee
+    // TODO:  Bot adds a note to candidate that the due date has been changed
+    // TODO:  Bot adds a note to the gitlab issue that the candidate got more time
+
+    // if:(!homeworkExtension.due_date){homeworkExtension.due_date=currentDate+7}
+
+    console.log(
+      `[Bot] Extending homework of candidate with id ${candidate.id}. Extension Time: ${homeworkExtensionTask.due_date}`,
+    );
+
+    //let gitlabTaskDate =
   }
 
   private async handleError(error: Error, candidate: Candidate) {
@@ -141,8 +194,9 @@ export default class Bot {
     try {
       project = await this.getProjectByCandidate(candidate);
       botGitlabUser = await this.gitlab.getOwnUserInfo();
-      closedIssuesByBot = await this.gitlab.getClosedProjectIssues(
+      closedIssuesByBot = await this.gitlab.getProjectIssues(
         project.id,
+        "closed",
         botGitlabUser,
       );
     } catch (e) {
@@ -353,7 +407,7 @@ export default class Bot {
     }`;
     const fork = await this.gitlab.forkHomework(homeworkProject!.id, forkName);
 
-    const dueDate = this.calculateHomeworkDueDate(homeworkTask);
+    const dueDate = this.calculateDueDateFromTask(homeworkTask);
 
     await this.gitlab.addMaintainerToProject(
       fork.id,
@@ -373,16 +427,16 @@ export default class Bot {
     return { issue, fork, dueDate };
   }
 
-  private calculateHomeworkDueDate(homeworkTask: Task): Date {
+  private calculateDueDateFromTask(task: Task, fromDate?: Date): Date {
     let dueDate;
 
-    if (homeworkTask.due_date === null) {
+    if (task.due_date === null) {
       dueDate = addDaysToDate(
-        new Date(homeworkTask.created_at),
+        new Date(fromDate ? fromDate : task.created_at),
         DEFAULT_HOMEWORK_DURATION_IN_DAYS,
       );
     } else {
-      dueDate = new Date(homeworkTask.due_date);
+      dueDate = new Date(task.due_date);
     }
 
     return dueDate;
@@ -450,6 +504,12 @@ export default class Bot {
 
   private async getHomeworkTask(candidate: Candidate): Promise<Task | null> {
     return await this.getTaskByTitle(candidate, HOMEWORK_TASK_TITLE);
+  }
+
+  private async getHomeworkExtensionTask(
+    candidate: Candidate,
+  ): Promise<Task | null> {
+    return await this.getTaskByTitle(candidate, HOMEWORK_EXTENSION_TITLE);
   }
 
   private async hasUnfinishedErrorTask(candidate: Candidate): Promise<boolean> {

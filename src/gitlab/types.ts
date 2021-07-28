@@ -32,6 +32,7 @@ export type Issue = {
   assignee: User;
   author: User;
   web_url: string;
+  due_date?: string;
 };
 
 export type ForkProjectBody = {
