@@ -28,10 +28,12 @@ export type User = {
 };
 
 export type Issue = {
+  iid: number;
   title: string;
   assignee: User;
   author: User;
   web_url: string;
+  due_date?: string;
 };
 
 export type ForkProjectBody = {

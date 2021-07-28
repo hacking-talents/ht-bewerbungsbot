@@ -187,11 +187,9 @@ Deno.test(
     const forkProjectStub: Stub<Gitlab> = stub(gitlabInstance, "forkProject", [
       mockProject,
     ]);
-    stub(
-      gitlabInstance,
-      "getBranches",
-      () => [{ name: "master", protected: true, default: true }],
-    );
+    stub(gitlabInstance, "getBranches", () => [
+      { name: "master", protected: true, default: true },
+    ]);
     stub(gitlabInstance, "deleteBranch");
 
     const homeworkFork = await gitlabInstance.forkHomework(
@@ -235,11 +233,9 @@ Deno.test("forkHomework forks a project, but unprotect fails", async () => {
       throw new GitlabError("failed to unprotect branch");
     },
   );
-  stub(
-    gitlabInstance,
-    "getBranches",
-    () => [{ name: "master", protected: true, default: true }],
-  );
+  stub(gitlabInstance, "getBranches", () => [
+    { name: "master", protected: true, default: true },
+  ]);
   stub(gitlabInstance, "deleteBranch");
 
   await assertThrowsAsync(
@@ -265,11 +261,9 @@ Deno.test("forkHomework forks a project but forkProject fails", async () => {
   const forkProjectStub: Stub<Gitlab> = stub(gitlabInstance, "forkProject", [
     undefined,
   ]);
-  stub(
-    gitlabInstance,
-    "getBranches",
-    () => [{ name: "master", protected: true, default: true }],
-  );
+  stub(gitlabInstance, "getBranches", () => [
+    { name: "master", protected: true, default: true },
+  ]);
   stub(gitlabInstance, "deleteBranch");
 
   await assertThrowsAsync(
@@ -468,6 +462,7 @@ Deno.test("createHomeworkIssue makes correct api call", async () => {
   };
 
   const issue: Issue = {
+    iid: 1,
     title: "title",
     author: {
       id: 1,
@@ -509,77 +504,76 @@ Deno.test("createHomeworkIssue makes correct api call", async () => {
   );
 });
 
-Deno.test(
-  "getClosedProjectIssues returns all issues of a project",
-  async () => {
-    const randomIssue: Issue = {
-      title: "Know something",
-      author: {
-        id: 72,
-        name: "Igritte",
-        username: "redwildling",
-      },
-      assignee: {
-        id: 13,
-        name: "Jon Snow",
-        username: "whitewolf",
-      },
-      web_url: "",
-    };
+Deno.test("getProjectIssues returns all issues of a project", async () => {
+  const randomIssue: Issue = {
+    iid: 1,
+    title: "Know something",
+    author: {
+      id: 72,
+      name: "Igritte",
+      username: "redwildling",
+    },
+    assignee: {
+      id: 13,
+      name: "Jon Snow",
+      username: "whitewolf",
+    },
+    web_url: "",
+  };
 
-    const homeworkIssue: Issue = {
-      title: "Solve the given Task",
-      author: {
-        id: 42,
-        name: "Bewerbungsbot",
-        username: "bewerbungsbot",
-      },
-      assignee: {
-        id: 23,
-        name: "Sabine Wren",
-        username: "futuretalent",
-      },
-      web_url: "",
-    };
+  const homeworkIssue: Issue = {
+    iid: 1,
+    title: "Solve the given Task",
+    author: {
+      id: 42,
+      name: "Bewerbungsbot",
+      username: "bewerbungsbot",
+    },
+    assignee: {
+      id: 23,
+      name: "Sabine Wren",
+      username: "futuretalent",
+    },
+    web_url: "",
+  };
 
-    await withMockedFetch(
-      (input, init) => {
-        assertEquals(
-          input,
-          `${Gitlab.API_BASE_URL}/projects/projectId/issues?state=closed`,
-        );
-        assertEquals(init?.method, "GET");
-        return new Response(JSON.stringify([randomIssue, homeworkIssue]));
-      },
-      async () => {
-        const response = await gitlab().getClosedProjectIssues("projectId");
-        assertEquals(response, [randomIssue, homeworkIssue]);
-      },
-    );
-  },
-);
+  await withMockedFetch(
+    (input, init) => {
+      assertEquals(
+        input,
+        `${Gitlab.API_BASE_URL}/projects/projectId/issues?state=closed`,
+      );
+      assertEquals(init?.method, "GET");
+      return new Response(JSON.stringify([randomIssue, homeworkIssue]));
+    },
+    async () => {
+      const response = await gitlab().getProjectIssues("projectId", "closed");
+      assertEquals(response, [randomIssue, homeworkIssue]);
+    },
+  );
+});
 
-Deno.test(
-  "getClosedProjectIssues fails API call",
-  async () => {
-    await withMockedFetch(
-      (input, init) => {
-        assertEquals(
-          input,
-          `${Gitlab.API_BASE_URL}/projects/projectId/issues?state=closed`,
-        );
-        assertEquals(init?.method, "GET");
-        return new Response(JSON.stringify({}), { status: 500 });
-      },
-      async () => {
-        await assertThrowsAsync(() => gitlab().getClosedProjectIssues("Test"));
-      },
-    );
-  },
-);
+Deno.test("getProjectIssues fails API call", async () => {
+  await withMockedFetch(
+    (input, init) => {
+      assertEquals(
+        input,
+        `${Gitlab.API_BASE_URL}/projects/projectId/issues?state=closed`,
+      );
+      assertEquals(init?.method, "GET");
+      return new Response(JSON.stringify({}), { status: 500 });
+    },
+    async () => {
+      await assertThrowsAsync(() =>
+        gitlab().getProjectIssues("Test", "closed")
+      );
+    },
+  );
+});
 
-Deno.test("getClosedProjectIssues also queries for author when given", async () => {
+Deno.test("getProjectIssues also queries for author when given", async () => {
   const issue: Issue = {
+    iid: 1,
     title: "Know something",
     author: {
       id: 1234,
@@ -604,8 +598,9 @@ Deno.test("getClosedProjectIssues also queries for author when given", async () 
       return new Response(JSON.stringify([issue]));
     },
     async () => {
-      const response = await gitlab().getClosedProjectIssues(
+      const response = await gitlab().getProjectIssues(
         "projectId",
+        "closed",
         issue.author,
       );
       assertEquals(response, [issue]);
@@ -613,7 +608,7 @@ Deno.test("getClosedProjectIssues also queries for author when given", async () 
   );
 });
 
-Deno.test("getClosedProjectIssues can return no issues", async () => {
+Deno.test("getProjectIssues can return no issues", async () => {
   await withMockedFetch(
     (input, init) => {
       assertEquals(
@@ -624,7 +619,7 @@ Deno.test("getClosedProjectIssues can return no issues", async () => {
       return new Response(JSON.stringify([]));
     },
     async () => {
-      const response = await gitlab().getClosedProjectIssues("projectId");
+      const response = await gitlab().getProjectIssues("projectId", "closed");
       assertEquals(response, []);
     },
   );

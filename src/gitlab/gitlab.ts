@@ -258,12 +258,13 @@ export default class Gitlab extends HttpClient {
     return issue;
   }
 
-  async getClosedProjectIssues(
+  async getProjectIssues(
     projectId: string,
+    state = "all",
     author?: User,
   ): Promise<Issue[]> {
     const queryParams: { state: string; author_id?: string } = {
-      state: "closed",
+      state: state,
     };
     if (author) {
       queryParams.author_id = author.id.toString();
