@@ -82,8 +82,8 @@ export default class Bot {
 
   private async extendAllHomeworks(candidates: Candidate[]) {
     await Promise.all(
-      candidates.map((candidate) =>
-        this.extendHomework(candidate).catch((error) =>
+      candidates.map(async (candidate) =>
+        await this.extendHomework(candidate).catch((error) =>
           this.handleError(error, candidate)
         )
       ),
