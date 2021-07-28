@@ -132,16 +132,6 @@ export default class Bot {
       },
     ).catch(console.warn);
 
-    // TODO: if true, check if date has been set manually. If not set extension time to 7 days.
-    // const newDueDate = this.calculateDueDateFromTask(homeworkExtensionTask);
-    // TODO:  Bot changes gitlab issue due date
-
-    // TODO:  Bot extends gitlab repo access date
-    // TODO:  Bot pushes new due date to Recruitee
-    // TODO:  Bot adds a note to candidate that the due date has been changed
-    // TODO:  Bot adds a note to the gitlab issue that the candidate got more time
-
-    // if:(!homeworkExtension.due_date){homeworkExtension.due_date=currentDate+7}
     console.log(
       `[Bot] Extending homework of candidate with id ${candidate.id}. Extension Time: ${homeworkExtensionTask.due_date}`,
     );
