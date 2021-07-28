@@ -5,7 +5,7 @@ if [ -z "$1" ]; then
     exit
 fi
 
-homeworks_raw=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "https://gitlab.com/api/v4/projects?search=homework-$1&simple=true")
+homeworks_raw=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_TOKEN" "https://gitlab.com/api/v4/projects?search=homework-$1&simple=true&per_page=100")
 count=$(echo "$homeworks_raw" | jq length)
 
 echo "Found $count homeworks..."
@@ -39,3 +39,4 @@ then
 else
 	exit
 fi
+
