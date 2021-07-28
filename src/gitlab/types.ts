@@ -28,6 +28,7 @@ export type User = {
 };
 
 export type Issue = {
+  iid: number;
   title: string;
   assignee: User;
   author: User;

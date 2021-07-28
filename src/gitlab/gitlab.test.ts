@@ -462,6 +462,7 @@ Deno.test("createHomeworkIssue makes correct api call", async () => {
   };
 
   const issue: Issue = {
+    iid: 1,
     title: "title",
     author: {
       id: 1,
@@ -505,6 +506,7 @@ Deno.test("createHomeworkIssue makes correct api call", async () => {
 
 Deno.test("getProjectIssues returns all issues of a project", async () => {
   const randomIssue: Issue = {
+    iid: 1,
     title: "Know something",
     author: {
       id: 72,
@@ -520,6 +522,7 @@ Deno.test("getProjectIssues returns all issues of a project", async () => {
   };
 
   const homeworkIssue: Issue = {
+    iid: 1,
     title: "Solve the given Task",
     author: {
       id: 42,
@@ -570,6 +573,7 @@ Deno.test("getProjectIssues fails API call", async () => {
 
 Deno.test("getProjectIssues also queries for author when given", async () => {
   const issue: Issue = {
+    iid: 1,
     title: "Know something",
     author: {
       id: 1234,

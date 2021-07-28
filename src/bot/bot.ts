@@ -98,15 +98,39 @@ export default class Bot {
       return;
     }
 
-    // TODO: get old due date from gitlab issue ( AND from repository access )
     const project = await this.getProjectByCandidate(candidate);
-    // const botGitlabUser = await this.gitlab.getOwnUserInfo();
-    const projectIssues = await this.gitlab.getProjectIssues(
+    const issues = await this.gitlab.getProjectIssues(
       project.id,
       "opened",
     );
-    console.log("projectIssuesTest: " + projectIssues + "\n\n\n\n");
-    //const oldDueDate = projectIssues.
+
+    const issueIid = 1;
+    const firstIssue = issues.filter((issue) => issue.iid === issueIid)[0];
+    if (!firstIssue) {
+      return;
+    }
+
+    let oldDueDate;
+    if (firstIssue.due_date) {
+      new Date(firstIssue.due_date);
+    }
+    const newDueDate = this.calculateDueDateFromTask(
+      homeworkExtensionTask,
+      oldDueDate,
+    );
+
+    const body = {
+      "due_date": newDueDate,
+    };
+
+    // TODO: move function to GitLab module
+    await this.gitlab.makeRequest<unknown>(
+      `/projects/${project.id}/issues/${issueIid}`,
+      {
+        method: "PUT",
+        body,
+      },
+    ).catch(console.warn);
 
     // TODO: if true, check if date has been set manually. If not set extension time to 7 days.
     // const newDueDate = this.calculateDueDateFromTask(homeworkExtensionTask);
@@ -118,12 +142,9 @@ export default class Bot {
     // TODO:  Bot adds a note to the gitlab issue that the candidate got more time
 
     // if:(!homeworkExtension.due_date){homeworkExtension.due_date=currentDate+7}
-
     console.log(
       `[Bot] Extending homework of candidate with id ${candidate.id}. Extension Time: ${homeworkExtensionTask.due_date}`,
     );
-
-    //let gitlabTaskDate =
   }
 
   private async handleError(error: Error, candidate: Candidate) {
