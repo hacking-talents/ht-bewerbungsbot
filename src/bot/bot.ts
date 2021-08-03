@@ -57,9 +57,21 @@ export default class Bot {
       },
     );
 
-    const candidatesWithoutUnfinishedErrorTask = candidatesWithRequiredTag
-      .filter(
-        async (candidate) => await this.hasUnfinishedErrorTask(candidate),
+    const filterCandidatesWithoutUnfinishedErrorTask = async (
+      candidates: Candidate[],
+    ) => {
+      const results: boolean[] = await Promise.all(
+        candidates.map(async (candidate) =>
+          !(await this.hasUnfinishedErrorTask(candidate))
+        ),
+      );
+
+      return candidates.filter((_, index: number) => results[index]);
+    };
+
+    const candidatesWithoutUnfinishedErrorTask =
+      await filterCandidatesWithoutUnfinishedErrorTask(
+        candidatesWithRequiredTag,
       );
 
     await this.sendAllPendingHomeworks(
