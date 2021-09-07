@@ -9,13 +9,13 @@ export async function withMockedFetch(
   mockedFetch: (input: Request | URL | string, init?: RequestInit) => Response,
   testFunction: () => Promise<void>,
 ) {
-  const nativeFetch = window.fetch;
-  window.fetch = (input: Request | URL | string, init?: RequestInit) =>
+  const nativeFetch = globalThis.fetch;
+  globalThis.fetch = (input: Request | URL | string, init?: RequestInit) =>
     Promise.resolve(mockedFetch(input, init));
 
   await testFunction();
 
-  window.fetch = nativeFetch;
+  globalThis.fetch = nativeFetch;
 }
 
 Deno.test("global fetch function can be mocked", async () => {
