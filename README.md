@@ -46,6 +46,7 @@ The bot automatically only runs once. To run the bot regulary, set the
 - `--interval=<seconds>` set polling interval in seconds. Minimum allowed: 15s.
 - `--tag=<tag name>` only check candidates with a tag. E.g. _Bot-Test_
 - `-d` delete Repository at the end of successfull homework creation
+- `--dry-run` don't perform any actions, just log what the bot would have done
 
 Possible homeworks have to be entered in the recruitee profile field form to be
 selectable.

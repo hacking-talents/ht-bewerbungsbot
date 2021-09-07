@@ -33,6 +33,7 @@ export default class Bot {
   private deleteProjectInTheEnd = false;
   private requiredTag: string | null = null;
   private monitorer: Monitorer;
+  private dryRun: boolean;
 
   constructor(
     gitlab: Gitlab,
@@ -40,12 +41,14 @@ export default class Bot {
     monitorer: Monitorer,
     deleteProjectInTheEnd: boolean,
     requiredTag?: string,
+    dryRun?: boolean,
   ) {
     this.gitlab = gitlab;
     this.recruitee = recruitee;
     this.requiredTag = requiredTag || null;
     this.deleteProjectInTheEnd = deleteProjectInTheEnd;
     this.monitorer = monitorer;
+    this.dryRun = dryRun ?? false;
   }
 
   async poll() {
@@ -107,6 +110,13 @@ export default class Bot {
       candidate,
     );
     if (!homeworkExtensionTask) {
+      return;
+    }
+
+    if (this.dryRun) {
+      console.log(
+        `[Bot/dry-run] would have extended homework due date for ${candidate.name}`,
+      );
       return;
     }
 
@@ -211,9 +221,9 @@ export default class Bot {
   }
 
   private async handleClosedCandidateIssues(candidate: Candidate) {
-    let project;
-    let botGitlabUser;
-    let closedIssuesByBot;
+    let project: GitlabProject;
+    let botGitlabUser: GitlabUser;
+    let closedIssuesByBot: Issue[];
     try {
       project = await this.getProjectByCandidate(candidate);
       botGitlabUser = await this.gitlab.getOwnUserInfo();
@@ -235,6 +245,14 @@ export default class Bot {
         `There are multiple closed issues created by the Bot in project ${project.id}`,
       );
     }
+
+    if (this.dryRun) {
+      console.log(
+        `[Bot/dry-run] Candidate ${candidate.name} is done with their homework at ${project}`,
+      );
+      return;
+    }
+
     await this.recruitee.proceedCandidateToStage(
       candidate,
       HOMEWORK_RECEIVED_STAGE_TITLE,
@@ -290,8 +308,15 @@ export default class Bot {
       return;
     }
 
+    if (this.dryRun) {
+      console.log(
+        `[Bot/dry-run] Processing candidate "${candidate.name}" with id ${candidate.id}. Task-ID: ${homeworkTask.id}`,
+      );
+      return;
+    }
+
     console.log(
-      `[Bot] Processing candidate with id ${candidate.id}. Task-ID: ${homeworkTask.id}`,
+      `[Bot] Processing candidate "${candidate.name}" with id ${candidate.id}. Task-ID: ${homeworkTask.id}`,
     );
 
     if (candidate.emails[0] == undefined) {
