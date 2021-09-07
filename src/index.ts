@@ -5,12 +5,13 @@ import Bot from "./bot/bot.ts";
 import HealthchecksIO from "./monitoring/healthchecksio.ts";
 
 const args = parse(Deno.args, {
-  default: { o: false, tagRequired: undefined, d: false },
+  default: { o: false, tagRequired: undefined, d: false, "dry-run": false },
 });
 
 const pollingIntervalInS: number = Math.max(args.interval, 15);
 const tagRequired: string | undefined = args.tag;
 const deleteProjectInTheEnd: boolean = args.d;
+const dryRun = args["dry-run"];
 
 const {
   GITLAB_TOKEN,
@@ -61,6 +62,7 @@ const bot = new Bot(
   healthchecksIO,
   deleteProjectInTheEnd,
   tagRequired,
+  dryRun,
 );
 
 if (args.interval == undefined) {
