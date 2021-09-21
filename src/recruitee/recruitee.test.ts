@@ -185,7 +185,7 @@ Deno.test("completeTask uses the correct URL and HTTP method", () => {
   withMockedFetch(
     (input, init) => {
       assertEquals(input, `${Recruitee.BASE_URL}/companyId/tasks/${taskId}`);
-      assertEquals(init?.method, "PUT");
+      assertEquals(init?.method, "PATCH");
       return new Response();
     },
     async () => {

@@ -120,7 +120,7 @@ export default class Recruitee extends HttpClient {
 
   async completeTask(id: number): Promise<void> {
     await this.makeRequest<never, CompleteTaskBody>(`/tasks/${id}`, {
-      method: "PUT",
+      method: "PATCH",
       body: {
         task: {
           completed: true,
