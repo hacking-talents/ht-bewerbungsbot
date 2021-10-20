@@ -581,7 +581,7 @@ export default class Bot {
 
     if (tasks.length > 1) {
       throw new RecruiteeError(
-        `⚠️ Es scheinen mehrere Aufgaben mit Titel '${taskTitle}' vorhanden zu sein, bitte eines davon löschen.`,
+        `⚠️ Es scheinen mehrere Aufgaben mit Titel '${taskTitle}' für den Kandidaten "${candidate.name}" vorhanden zu sein, bitte eines davon löschen.`,
       );
     }
 
