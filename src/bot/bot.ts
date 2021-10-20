@@ -193,19 +193,18 @@ export default class Bot {
     const homeworkSentCandidates = (
       await Promise.all(
         candidates.map(async (candidate) => {
-          for (const placement of candidate.placements) {
-            if (!placement.stage_id) continue;
-            try {
-              const stage = await this.recruitee.getStageByName(
-                HOMEWORK_SENT_STAGE_TITLE,
-                placement.offer_id,
-              );
-              if (placement.stage_id == stage.id) {
-                return candidate;
-              }
-            } catch (e) {
-              this.handleError(e, candidate);
+          const placement = candidate.placements[0];
+          if (!placement || !placement.stage_id) return;
+          try {
+            const stage = await this.recruitee.getStageByName(
+              HOMEWORK_SENT_STAGE_TITLE,
+              placement.offer_id,
+            );
+            if (placement.stage_id == stage.id) {
+              return candidate;
             }
+          } catch (e) {
+            this.handleError(e, candidate);
           }
         }),
       )
