@@ -5,7 +5,6 @@ import { GitlabProject, Issue, User as GitlabUser } from "../gitlab/types.ts";
 import Recruitee from "../recruitee/recruitee.ts";
 import {
   Candidate,
-  CandidateReference,
   CandidateSingleLineField,
   Task,
 } from "../recruitee/types.ts";
@@ -340,16 +339,11 @@ export default class Bot {
       homeworkTask,
     );
 
-    const homeworkTaskDetails = await this.recruitee.getTaskDetails(
-      homeworkTask,
-    );
-
     await this.finalizeCandidate(candidate, homeworkTask, homework, dueDate);
 
     if (this.recruitee.shouldSendMail(candidate)) {
       await this.notifyCandidate(
         candidate,
-        homeworkTaskDetails.references,
         gitlabIssue,
         gitlabFork,
         addDaysToDate(dueDate, -1),
@@ -410,13 +404,12 @@ export default class Bot {
 
   private async notifyCandidate(
     candidate: Candidate,
-    references: CandidateReference[],
     gitlabIssue: Issue,
     gitlabFork: GitlabProject,
     dueDate: Date,
   ) {
     const address = this.recruitee.getCandidateSalutation(candidate);
-    const signature = this.recruitee.getSignature(candidate, references);
+    const signature = this.recruitee.getSignature(candidate);
 
     const candidateMailAddress = candidate.emails.shift();
     if (!candidateMailAddress) {

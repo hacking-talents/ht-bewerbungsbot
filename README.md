@@ -5,9 +5,8 @@
 1. Enter homework-name and GitLab Username in the profile fields
 2. Optionally override the automatic address and/or signature:
    - The address will be the candidates first name. E.g. "_Hallo Sam,…_"
-   - The signature will be the first names of the people assigned on the
-     _homework_ task. E.g. "_Viele Grüße, Max und Robert von den hacking
-     talents_"
+   - The signature will be "_von den sipgate hacking talents_", unless overriden
+     using the field "Anrede Override"
 3. Create a new Task on the right:
    - Content should be **Hausaufgabe**
    - Optionally set a due date. The default is seven days.

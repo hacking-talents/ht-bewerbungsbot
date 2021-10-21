@@ -10,7 +10,7 @@ export interface SendHomeworkTemplateValues {
 export const sendHomeworkSubject = "sipgate Hausaufgabe";
 
 export const sendHomeworkTemplate = (values: SendHomeworkTemplateValues) =>
-  `<p>Hallo ${values.applicantName},</p>
+  `<p>Hallo ${values.applicantName},</p><br />
 
   <p>vielen Dank für die Zusendung deines GitLab-Accounts.</p>
 
@@ -38,10 +38,9 @@ export const sendHomeworkTemplate = (values: SendHomeworkTemplateValues) =>
 
   <p>Der Zugang zum Repository läuft nach der Bearbeitungszeit automatisch ab. Das hat zur Folge, dass du ab diesem Zeitpunkt nicht länger pullen oder
   pushen kannst.
-  Deine Lösung werden wir uns im Anschluss in jedem Fall anschauen. Im Anschluss melden wir uns bei dir.</p>
-
-  <p>Viel Erfolg und viele Grüße,</p>
-${values.mk_signature}`;
+  Deine Lösung werden wir uns im Anschluss in jedem Fall anschauen. Im Anschluss melden wir uns bei dir.</p><br />
+  <p>Viel Erfolg und viele Grüße,<br />
+${values.mk_signature}</p>`;
 
 export interface GitlabIssueTemplateValues {
   title: string;

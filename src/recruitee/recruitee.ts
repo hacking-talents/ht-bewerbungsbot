@@ -11,7 +11,6 @@ import {
   CandidateDetails,
   CandidateDropdownField,
   CandidateField,
-  CandidateReference,
   CandidateSingleLineField,
   CompleteTaskBody,
   CreateCandidateTaskBody,
@@ -30,8 +29,7 @@ import { EmojiErrorCodes } from "../errormojis.ts";
 export const ADDRESS_FIELD_NAME = "Anrede Override";
 export const SIGNATURE_FIELD_NAME = "Unterschrift Override";
 export const SHOULD_SEND_MAIL_FIELD_NAME = "Bot-Mails";
-const ADMIN_REFERENCE_TYPE = "Admin";
-export const DEFAULT_SIGNATURE = "Deine Hacking Talents";
+export const DEFAULT_SIGNATURE = "deine sipgate hacking talents";
 const OFFER_BOT_TAG = "HT-Bot Target";
 
 export default class Recruitee extends HttpClient {
@@ -83,11 +81,6 @@ export default class Recruitee extends HttpClient {
     );
 
     return response.tasks;
-  }
-
-  async getTaskDetails(task: Task): Promise<TaskDetails> {
-    const response = await this.makeRequest<TaskDetails>(`/tasks/${task.id}`);
-    return response;
   }
 
   async createCandidateTask(
@@ -303,28 +296,18 @@ export default class Recruitee extends HttpClient {
     }
   }
 
-  getSignature(candidate: Candidate, references: CandidateReference[]): string {
+  getSignature(candidate: Candidate): string {
     const signatureOverride = candidate.fields.find(
       (field) => field.name == SIGNATURE_FIELD_NAME,
     );
 
     if (signatureOverride && isSingleLineField(signatureOverride)) {
-      const overrideNames = signatureOverride.values.map((value) => value.text);
-      if (overrideNames.length > 0) {
-        return this.buildSignatureFromNames(overrideNames);
+      const override = signatureOverride.values.map((value) => value.text);
+      if (override.length > 0) {
+        return this.buildSignatureFromNames(override);
       }
     }
 
-    const subscribedPersons = references.filter(
-      (reference: CandidateReference) => reference.type == ADMIN_REFERENCE_TYPE, // Check if reference is subscribed Person
-    );
-
-    if (subscribedPersons.length > 0) {
-      const firstNames = subscribedPersons
-        .map((person) => person.first_name)
-        .filter((name): name is string => !!name);
-      return this.buildSignatureFromNames(firstNames);
-    }
     return DEFAULT_SIGNATURE;
   }
 
@@ -423,8 +406,8 @@ export default class Recruitee extends HttpClient {
       const last = sorted.pop();
       const remaining = sorted.join(", ");
 
-      return `${remaining} und ${last} von den hacking talents`;
+      return `${remaining} und ${last} von den sipgate hacking talents`;
     }
-    return `${names[0]} von den hacking talents`;
+    return `${names[0]} von den sipgate hacking talents`;
   }
 }
