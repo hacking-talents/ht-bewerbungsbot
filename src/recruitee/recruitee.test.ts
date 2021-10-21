@@ -9,14 +9,12 @@ import {
   CandidateBooleanField,
   CandidateDropdownField,
   CandidateField,
-  CandidateReference,
   CandidateSingleLineField,
   MinimalCandidate,
   Offer,
   Placement,
   StageDetail,
   Task,
-  TaskDetails,
 } from "./types.ts";
 import { withMockedFetch } from "../http/http.test.ts";
 import Recruitee, {
@@ -128,30 +126,6 @@ Deno.test("getCandidateTasks returns correct tasks", () => {
       const response = await r.getCandidateTasks(candidateId);
 
       assertEquals(response, mockedTasks);
-    },
-  );
-});
-
-Deno.test("getTaskDetails returns correct task details", () => {
-  const taskId = 15;
-  const mockedTask = mockTask(taskId);
-  const mockedTaskDetails = mockTaskDetails(taskId);
-
-  withMockedFetch(
-    (input, init) => {
-      assertEquals(
-        input,
-        `${Recruitee.BASE_URL}/companyId/tasks/${mockedTask.id}`,
-      );
-      assertEquals(init?.method, "GET");
-
-      return new Response(JSON.stringify(mockedTaskDetails));
-    },
-    async () => {
-      const r = recruitee();
-      const response = await r.getTaskDetails(mockedTask);
-
-      assertEquals(response, mockedTaskDetails);
     },
   );
 });
@@ -450,7 +424,7 @@ Deno.test(
 );
 
 Deno.test(
-  "getSignature returns default signature when no assignees are specified",
+  "getSignature returns default signature when no signature override is specified",
   () => {
     const c: Candidate = {
       id: 123,
@@ -460,7 +434,7 @@ Deno.test(
       placements: [],
       tags: [],
     };
-    const actual = recruitee().getSignature(c, []);
+    const actual = recruitee().getSignature(c);
     assertEquals(actual, DEFAULT_SIGNATURE);
   },
 );
@@ -484,43 +458,10 @@ Deno.test("getSignature returns override signature when specified", () => {
     placements: [],
     tags: [],
   };
-  const actual = recruitee().getSignature(c, []);
-  assertEquals(actual, "Override von den hacking talents");
+  const actual = recruitee().getSignature(c);
+  assertEquals(actual, "Override von den sipgate hacking talents");
 });
 
-Deno.test("getSignature returns a name when one assignee is specified", () => {
-  const c = mockCandidate();
-  const actual = recruitee().getSignature(c, [mockAssignee("Bob")]);
-
-  assertEquals(actual, "Bob von den hacking talents");
-});
-
-Deno.test(
-  "getSignature returns concatenated names when two assignees are specified",
-  () => {
-    const c = mockCandidate();
-    const actual = recruitee().getSignature(c, [
-      mockAssignee("Anna"),
-      mockAssignee("Bob"),
-    ]);
-
-    assertEquals(actual, "Anna und Bob von den hacking talents");
-  },
-);
-
-Deno.test(
-  "getSignature returns concatenated names when more than two assignees are specified",
-  () => {
-    const c = mockCandidate();
-    const actual = recruitee().getSignature(c, [
-      mockAssignee("Bob"),
-      mockAssignee("Anna"),
-      mockAssignee("Chris"),
-    ]);
-
-    assertEquals(actual, "Anna, Bob und Chris von den hacking talents");
-  },
-);
 Deno.test(
   "shouldSendMail returns true if respected Option in Recruitee is left blank",
   () => {
@@ -823,13 +764,6 @@ Deno.test(
   },
 );
 
-function mockAssignee(firstName: string): CandidateReference {
-  return {
-    type: "Admin",
-    first_name: firstName,
-  };
-}
-
 function mockCandidate(id = 123): Candidate {
   return {
     id,
@@ -875,13 +809,6 @@ function mockTask(id: number): Task {
     due_date: "",
     created_at: "",
     references: [],
-  };
-}
-
-function mockTaskDetails(id: number): TaskDetails {
-  return {
-    references: [],
-    task: mockTask(id),
   };
 }
 
