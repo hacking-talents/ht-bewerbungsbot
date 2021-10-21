@@ -16,8 +16,10 @@ export const sendHomeworkTemplate = (values: SendHomeworkTemplateValues) =>
 
   <p>Du solltest bereits zwei Benachrichtigungen von GitLab erhalten haben. In dem <a href="${values.projectUrl}">GitLab-Repository</a>
   findest du in der README Datei die Hausaufgabe.
-  Du hast für die Bearbeitung der Hausaufgabe erst einmal bis zum ${values.homeworkDueDate.getDate()}.${values
-    .homeworkDueDate.getMonth() + 1}. Zeit.
+  Du hast für die Bearbeitung der Hausaufgabe erst einmal bis zum ${values.homeworkDueDate.getDate()}.${
+    values
+      .homeworkDueDate.getMonth() + 1
+  }. Zeit.
   Falls es zeitlich zu dem Datum knapp werden sollte, melde dich bitte rechtzeitig bei uns - wir alle kennen solche stressigen Wochen!</p>
 
   <p>Klasse wäre es, wenn du uns an deinen Überlegungen beim Lösen der Hausaufgabe teilhaben lässt. Dafür kannst du die Funktionen von GitLab nutzen
