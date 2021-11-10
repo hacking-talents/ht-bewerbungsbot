@@ -339,9 +339,9 @@ export default class Bot {
       homeworkTask,
     );
 
-    await this.finalizeCandidate(candidate, homeworkTask, homework, dueDate);
+    const shouldSendMail = this.recruitee.shouldSendMail(candidate);
 
-    if (this.recruitee.shouldSendMail(candidate)) {
+    if (shouldSendMail) {
       await this.notifyCandidate(
         candidate,
         gitlabIssue,
@@ -349,6 +349,14 @@ export default class Bot {
         addDaysToDate(dueDate, -1),
       ).catch((error) => this.handleError(error, candidate));
     }
+
+    await this.finalizeCandidate(
+      candidate,
+      homeworkTask,
+      homework,
+      dueDate,
+      shouldSendMail,
+    );
 
     if (this.deleteProjectInTheEnd) {
       await this.deleteGitlabProjectAndRemoveRepoField(
@@ -380,6 +388,7 @@ export default class Bot {
     homeworkTask: Task,
     homework: string,
     dueDate: Date,
+    shouldSendMail: boolean,
   ) {
     await this.recruitee.completeTask(homeworkTask.id);
 
@@ -396,7 +405,9 @@ export default class Bot {
 
     await this.recruitee.addNoteToCandidate(
       candidate.id,
-      `📤  Hausaufgabe \"${homework}\" versendet. Fällig am ${localizedDueDate}.`,
+      `📤  Hausaufgabe \"${homework}\" ${
+        shouldSendMail ? "versendet" : "angelegt"
+      }. Fällig am ${localizedDueDate}.`,
     );
 
     // TODO: Create additional Tasks, that need to be done. See [Issue #6](https://github.com/hacking-talents/ht-bewerbungsbot/issues/6)
