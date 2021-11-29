@@ -79,39 +79,33 @@ describe("End-to-end test for HT-Bewerbungsbot", () => {
         err,
       )
     );
+    await deleteGitLabProject(gitlab).catch((err) => {
+      console.error(
+        "Project deletion failed. Please delete project manually.",
+        err,
+      );
+    });
   });
 
-  it(
-    "checks that a homework is forked and the 'GitLab Repository' field is correctly set",
-    async () => {
-      await bot.poll();
+  it("checks that a homework is forked and the 'GitLab Repository' field is correctly set", async () => {
+    await bot.poll();
 
-      const candidate = await recruitee.getCandidateById(candidateId);
-      const gitlabRepoUrl = getGitlabRepoFieldValueOrThrow(
-        recruitee,
-        candidate,
-      );
-      assertNotEquals(gitlabRepoUrl, "");
-    },
-  );
+    const candidate = await recruitee.getCandidateById(candidateId);
+    const gitlabRepoUrl = getGitlabRepoFieldValueOrThrow(recruitee, candidate);
+    assertNotEquals(gitlabRepoUrl, "");
+  });
 
-  it(
-    "checks that a task is added to the Recruitee profile",
-    async () => {
-      const candidate = await recruitee.getCandidateById(candidateId);
-      const gitlabRepoUrl = getGitlabRepoFieldValueOrThrow(
-        recruitee,
-        candidate,
-      );
+  it("checks that a task is added to the Recruitee profile", async () => {
+    const candidate = await recruitee.getCandidateById(candidateId);
+    const gitlabRepoUrl = getGitlabRepoFieldValueOrThrow(recruitee, candidate);
 
-      await closeGitlabIssue(gitlab, gitlabRepoUrl);
-      await bot.poll();
+    await closeGitlabIssue(gitlab, gitlabRepoUrl);
+    await bot.poll();
 
-      const tasks = await getTestCandidateTasks(recruitee, candidateId);
-      const mkTask = tasks.find((t) => t.title == TASK_ASSIGN_MK_TEXT);
-      assertExists(mkTask);
-    },
-  );
+    const tasks = await getTestCandidateTasks(recruitee, candidateId);
+    const mkTask = tasks.find((t) => t.title == TASK_ASSIGN_MK_TEXT);
+    assertExists(mkTask);
+  });
 });
 
 function getGitlabRepoFieldValueOrThrow(
@@ -270,6 +264,31 @@ async function getTestCandidateTasks(
     {},
   );
   return tasks;
+}
+
+async function deleteGitLabProject(gitlab: Gitlab) {
+  if (
+    TEST_CANDIDATE_GITLAB_USER == "" ||
+    TEST_CANDIDATE_GITLAB_USER == null ||
+    TEST_CANDIDATE_GITLAB_USER == undefined
+  ) {
+    throw new Error(
+      "GitLab test username is empty. You are sure that you want delete all projects?",
+    );
+  }
+  const projects = await gitlab.getHomeworkProjects(TEST_CANDIDATE_GITLAB_USER);
+  const projectsToDelete = projects.filter((projects) =>
+    projects.name.toString().includes("homework-" + TEST_CANDIDATE_GITLAB_USER)
+  );
+  console.log(
+    "Deleting Test-Project with name " +
+      projectsToDelete.map((project) => project.name),
+  );
+  await Promise.all(
+    projectsToDelete.map(async (project) => {
+      await gitlab.deleteProject(project.id);
+    }),
+  );
 }
 
 async function deleteCandidate(recruitee: Recruitee, candidateId: number) {

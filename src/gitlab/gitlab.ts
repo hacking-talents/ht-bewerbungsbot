@@ -35,6 +35,22 @@ export default class Gitlab extends HttpClient {
     this.homeworkNamespace = homeworkNamespace;
   }
 
+  async searchAllProjectsByName(
+    name: string,
+    namespaceID: string,
+  ): Promise<GitlabProject[]> {
+    const queryParams = {
+      search: name,
+    };
+    const projects = await this.makeRequest<GitlabProject[]>(
+      `/groups/${namespaceID}/projects`,
+      {
+        queryParams,
+      },
+    );
+    return projects;
+  }
+
   async getProject(name: string, namespaceID: string): Promise<GitlabProject> {
     const queryParams = {
       search: name,
@@ -64,6 +80,10 @@ export default class Gitlab extends HttpClient {
 
   async getHomeworkProject(name: string) {
     return await this.getProject(name, this.homeworkNamespace);
+  }
+
+  async getHomeworkProjects(name: string) {
+    return await this.searchAllProjectsByName(name, this.homeworkNamespace);
   }
 
   async forkProject(
@@ -144,8 +164,8 @@ export default class Gitlab extends HttpClient {
 
   async deleteSolutionBranch(project: GitlabProject) {
     const branches = await this.getBranches(project);
-    const hasSolutionBranch = branches.some((branch) =>
-      branch.name === SOLUTION_BRANCH_NAME
+    const hasSolutionBranch = branches.some(
+      (branch) => branch.name === SOLUTION_BRANCH_NAME,
     );
     if (hasSolutionBranch) {
       await this.deleteBranch(project, SOLUTION_BRANCH_NAME);
