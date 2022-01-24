@@ -474,6 +474,10 @@ export default class Bot {
     );
 
     await this.setGitlabRepoProfileField(candidate, fork.web_url);
+    await this.setHomeworkCorrectionGuideProfileField(
+      candidate,
+      Deno.env.get("CORRECTION_GUIDE_LINK"),
+    );
 
     return { issue, fork, dueDate };
   }
@@ -505,6 +509,37 @@ export default class Bot {
     if (!repoField || !isSingleLineField(repoField)) {
       throw new Error(
         `${GITLAB_USERNAME_FIELD_NAME} field is not configured correctly. Please check the profile fields template for candidates.`,
+      );
+    }
+
+    await this.recruitee.updateProfileField(candidate, repoField, [content]);
+  }
+
+  private async setHomeworkCorrectionGuideProfileField(
+    candidate: Candidate,
+    content: string | undefined,
+  ): Promise<void> {
+    const fieldName = Deno.env.get("CORRECTION_GUIDE_PROFILE_FIELD_NAME");
+    if (content === undefined) {
+      console.warn(
+        "WARNING: CORRECTION_GUIDE_LINK is not set. Skipping ProfileField update.",
+      );
+      return;
+    }
+    if (fieldName === undefined) {
+      console.warn(
+        "WARNING: CORRECTION_GUIDE_PROFILE_FIELD_NAME is not set. Skipping ProfileField update.",
+      );
+      return;
+    }
+    const repoField = this.recruitee.getProfileFieldByName(
+      candidate,
+      fieldName,
+    );
+
+    if (!repoField || !isSingleLineField(repoField)) {
+      throw new Error(
+        `${fieldName} field is not configured correctly. Please check the profile fields template for candidates.`,
       );
     }
 
