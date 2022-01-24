@@ -43,6 +43,8 @@ const {
   TEST_CANDIDATE_OFFER_ID,
   TEST_CANDIDATE_GITLAB_USER,
   TEST_HOMEWORK,
+  CORRECTION_GUIDE_PROFILE_FIELD_NAME,
+  CORRECTION_GUIDE_LINK,
 } = Deno.env.toObject();
 
 class MockMonitorer implements Monitorer {
@@ -69,7 +71,13 @@ describe("End-to-end test for HT-Bewerbungsbot", () => {
   let candidateId: number;
 
   beforeAll(async () => {
-    candidateId = await createCandidate(recruitee);
+    try {
+      const candidate = await createCandidate(recruitee);
+      candidateId = candidate.id;
+      await setupCandidate(recruitee, candidate);
+    } catch (e) {
+      console.error("Creation of test candidate failed. " + e.message);
+    }
   });
 
   afterAll(async () => {
@@ -155,7 +163,25 @@ function getHomeworkFieldOrThrow(
   return field;
 }
 
-async function createCandidate(recruitee: Recruitee): Promise<number> {
+function getCorrectionGuideFieldOrThrow(
+  recruitee: Recruitee,
+  candidate: Candidate,
+): CandidateSingleLineField {
+  const field = recruitee.getProfileFieldByName(
+    candidate,
+    CORRECTION_GUIDE_PROFILE_FIELD_NAME,
+  );
+
+  if (!field || !isSingleLineField(field)) {
+    throw new Error(
+      "expected correction guide field to be a single line field",
+    );
+  }
+
+  return field;
+}
+
+async function createCandidate(recruitee: Recruitee): Promise<Candidate> {
   const body = {
     candidate: {
       name: TEST_CANDIDATE_NAME,
@@ -173,6 +199,10 @@ async function createCandidate(recruitee: Recruitee): Promise<number> {
     },
   );
 
+  return candidate;
+}
+
+async function setupCandidate(recruitee: Recruitee, candidate: Candidate) {
   await addTagToCandidate(recruitee, candidate.id);
 
   await recruitee.updateProfileField(
@@ -186,8 +216,14 @@ async function createCandidate(recruitee: Recruitee): Promise<number> {
     getHomeworkFieldOrThrow(recruitee, candidate),
     [TEST_HOMEWORK],
   );
+
+  await recruitee.updateProfileField(
+    candidate,
+    getCorrectionGuideFieldOrThrow(recruitee, candidate),
+    [CORRECTION_GUIDE_LINK],
+  );
+
   await addTaskToTestCandidate(recruitee, candidate.id, "Hausaufgabe");
-  return candidate.id;
 }
 
 async function addTagToCandidate(recruitee: Recruitee, candidateId: number) {
