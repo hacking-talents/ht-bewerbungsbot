@@ -59,6 +59,17 @@ using docker:
 sudo docker build -t ht-bewerbungsbot .
 ```
 
+## 🐛 Debugging
+
+The application is currently hosted on [Heroku](https://id.heroku.com/login),
+which only keeps some logs. To access more logs, use the
+[Heroku CLI-tool](https://devcenter.heroku.com/articles/heroku-cli), where you
+can see any amount of logs with the `-n <number of lines>` option:
+
+```bash
+heroku logs -n 1000 -t -a ht-bewerbungsbot
+```
+
 ## 🌈 Contributing
 
 - Install the git-hooks by running the following git command:
@@ -83,4 +94,4 @@ git config --local core.hooksPath .githooks
 ### Hints
 
 - The long documentation of the Recruitee API can be found
-  [here](https://api.recruitee.com/docs/index.html)
+  [here](https://api.recruitee.com/docs/index.html). It takes a while to load
