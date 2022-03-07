@@ -63,8 +63,8 @@ export default class Bot {
       candidates: Candidate[],
     ) => {
       const results: boolean[] = await Promise.all(
-        candidates.map(async (candidate) =>
-          !(await this.hasUnfinishedErrorTask(candidate))
+        candidates.map(
+          async (candidate) => !(await this.hasUnfinishedErrorTask(candidate)),
         ),
       );
 
@@ -96,10 +96,11 @@ export default class Bot {
 
   private async extendAllHomeworks(candidates: Candidate[]) {
     await Promise.all(
-      candidates.map(async (candidate) =>
-        await this.extendHomework(candidate).catch((error) =>
-          this.handleError(error, candidate)
-        )
+      candidates.map(
+        async (candidate) =>
+          await this.extendHomework(candidate).catch((error) =>
+            this.handleError(error, candidate)
+          ),
       ),
     );
   }
@@ -120,10 +121,7 @@ export default class Bot {
     }
 
     const project = await this.getProjectByCandidate(candidate);
-    const issues = await this.gitlab.getProjectIssues(
-      project.id,
-      "opened",
-    );
+    const issues = await this.gitlab.getProjectIssues(project.id, "opened");
 
     const issueIid = 1;
     const firstIssue = issues.filter((issue) => issue.iid === issueIid)[0];
@@ -141,17 +139,16 @@ export default class Bot {
     );
 
     const body = {
-      "due_date": newDueDate,
+      due_date: newDueDate,
     };
 
     // TODO: move function to GitLab module
-    await this.gitlab.makeRequest<unknown>(
-      `/projects/${project.id}/issues/${issueIid}`,
-      {
+    await this.gitlab
+      .makeRequest<unknown>(`/projects/${project.id}/issues/${issueIid}`, {
         method: "PUT",
         body,
-      },
-    ).catch(console.warn);
+      })
+      .catch(console.warn);
 
     console.log(
       `[Bot] Extending homework of candidate with id ${candidate.id}. Extension Time: ${homeworkExtensionTask.due_date}`,
