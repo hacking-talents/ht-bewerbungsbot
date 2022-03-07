@@ -104,6 +104,10 @@ export type CompleteTaskBody = {
   };
 };
 
+export type Note = {
+  body: string;
+};
+
 export type AddNoteToCandidateBody = {
   note: {
     body: string;

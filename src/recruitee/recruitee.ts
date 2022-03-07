@@ -15,6 +15,7 @@ import {
   CompleteTaskBody,
   CreateCandidateTaskBody,
   MinimalCandidate,
+  Note,
   Offer,
   SendMailToCandidateBody,
   StageDetail,
@@ -139,6 +140,19 @@ export default class Recruitee extends HttpClient {
         },
       },
     );
+  }
+
+  async getCandidateNotes(candidateId: number): Promise<Note[]> {
+    const response = await this.makeRequest<{ notes: Note[] }>(
+      `/candidates/${candidateId}/notes`,
+    );
+
+    return response.notes;
+  }
+
+  async noteExists(candidateId: number, errorString: string): Promise<boolean> {
+    const notes = await this.getCandidateNotes(candidateId);
+    return notes.some((note) => note.body.includes(errorString));
   }
 
   getCandidateSalutation(candidate: Candidate): string {

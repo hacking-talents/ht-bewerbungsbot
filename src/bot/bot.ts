@@ -615,9 +615,12 @@ export default class Bot {
     }
 
     if (tasks.length > 1) {
-      throw new RecruiteeError(
-        `⚠️ Es scheinen mehrere Aufgaben mit Titel '${taskTitle}' für den Kandidaten "${candidate.name}" vorhanden zu sein, bitte eines davon löschen.`,
-      );
+      const errorString =
+        `⚠️ Es scheinen mehrere Aufgaben mit Titel '${taskTitle}' für den Kandidaten "${candidate.name}" vorhanden zu sein, bitte eines davon löschen.`;
+      if (!await this.recruitee.noteExists(candidate.id, errorString)) {
+        await this.recruitee.addNoteToCandidate(candidate.id, errorString);
+      }
+      throw new RecruiteeError(errorString);
     }
 
     return tasks[0];
