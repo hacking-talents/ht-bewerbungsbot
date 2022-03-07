@@ -7,6 +7,7 @@ import {
 } from "../messages.ts";
 import {
   AddNoteToCandidateBody,
+  AddTagToCandidateBody,
   Candidate,
   CandidateDetails,
   CandidateDropdownField,
@@ -19,6 +20,7 @@ import {
   Offer,
   SendMailToCandidateBody,
   StageDetail,
+  Tag,
   Task,
   TaskDetails,
   UpdateProfileFieldDropdownBody,
@@ -234,6 +236,13 @@ export default class Recruitee extends HttpClient {
         { method: "POST", body },
       );
     }
+  }
+
+  async addTagToCandidate(candidate: Candidate, tag: Tag) {
+    await this.makeRequest<never, AddTagToCandidateBody>(
+      `/candidates/${candidate.id.toString()}/tags`,
+      { method: "POST", body: { tag } },
+    );
   }
 
   private async updateProfileFieldDropdown(

@@ -81,6 +81,8 @@ export type TaskDetails = {
   task: Task;
 };
 
+export type Tag = "Bot-Fehler aufgetreten" | "Bot-Test";
+
 export type PipelineTemplate = {
   stages: StageDetail[];
 };
@@ -126,4 +128,8 @@ export type UpdateProfileFieldSingleLineBody = {
 
 export type UpdateProfileFieldDropdownBody = {
   field: unknown; // TODO: add correct type
+};
+
+export type AddTagToCandidateBody = {
+  tag: Tag;
 };

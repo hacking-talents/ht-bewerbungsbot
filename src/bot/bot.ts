@@ -172,6 +172,7 @@ export default class Bot {
       );
     }
 
+    await this.recruitee.addTagToCandidate(candidate, "Bot-Fehler aufgetreten");
     await this.recruitee.createCandidateTask(candidate, ERROR_TASK_TITLE);
   }
 
