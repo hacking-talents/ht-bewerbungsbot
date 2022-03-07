@@ -620,7 +620,6 @@ export default class Bot {
       if (!await this.recruitee.noteExists(candidate.id, errorString)) {
         await this.recruitee.addNoteToCandidate(candidate.id, errorString);
       }
-      throw new RecruiteeError(errorString);
     }
 
     return tasks[0];
