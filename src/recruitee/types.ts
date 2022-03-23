@@ -4,6 +4,7 @@ export type Offer = {
   id: number;
   offer_tags: string[];
   pipeline_template: PipelineTemplate;
+  status: "published" | "internal" | "closed" | "draft" | "archived";
 };
 
 export type CandidateDetails = {

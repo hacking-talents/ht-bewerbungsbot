@@ -46,11 +46,13 @@ export default class Recruitee extends HttpClient {
     const allOffers = await this.makeRequest<{ offers: Offer[] }>(`/offers`);
 
     const offers = allOffers.offers.filter((offer: Offer) => {
-      return offer.offer_tags.includes(tag);
+      const isNotArchived = offer.status != "archived";
+      const hasTag = offer.offer_tags.includes(tag);
+      return isNotArchived && hasTag;
     });
     if (offers.length === 0) {
       throw new RecruiteeError(
-        `Keine Jobangebote mit dem Tag "${tag}" gefunden`,
+        `Keine nicht-archivierten Jobangebote mit dem Tag "${tag}" gefunden`,
       );
     }
 
