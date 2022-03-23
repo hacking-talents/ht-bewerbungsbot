@@ -798,6 +798,7 @@ function mockOffer(
     pipeline_template: {
       stages: stages,
     },
+    status: "published",
   };
 }
 
