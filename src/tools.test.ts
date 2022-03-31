@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.100.0/testing/asserts.ts";
-import { addDaysToDate, dateToISO } from "./tools.ts";
+import { addDaysToDate, dateToISO, sanitizeRepositoryName } from "./tools.ts";
 
 Deno.test("addDaysToDate correctly adds given number of days", () => {
   const actual = addDaysToDate(new Date("2018-05-13"), 2);
@@ -19,4 +19,23 @@ Deno.test("addDaysToDate correctly changes year", () => {
 Deno.test("dateToISO correctly converts date from Date", () => {
   const actual = dateToISO(new Date("2018-05-13"));
   assertEquals(actual, "2018-05-13");
+});
+
+Deno.test("sanitizeRepositoryName correctly sanatizes a repository name", () => {
+  assertEquals(
+    sanitizeRepositoryName("homework-someUser-rand"),
+    "homework-someUser-rand",
+  );
+  assertEquals(
+    sanitizeRepositoryName("homework-someUser_-rand"),
+    "homework-someUser-rand",
+  );
+  assertEquals(
+    sanitizeRepositoryName("homework-someUser--rand"),
+    "homework-someUser-rand",
+  );
+  assertEquals(
+    sanitizeRepositoryName("homework-someUser___-rand"),
+    "homework-someUser-rand",
+  );
 });

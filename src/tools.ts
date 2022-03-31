@@ -19,5 +19,5 @@ export function sleep(seconds: number): Promise<void> {
 }
 
 export function sanitizeRepositoryName(repositoryName: string): string {
-  return repositoryName.replace(/[-_]{2,}/, "");
+  return repositoryName.replace(/[-_]{2,}/, "-");
 }
