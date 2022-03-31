@@ -24,7 +24,6 @@ export const GITLAB_USERNAME_FIELD_NAME = "GitLab Account";
 export const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
 const GITHUB_BASE_URL = "https://gitlab.com/";
 const DEFAULT_HOMEWORK_DURATION_IN_DAYS = 8;
-const ILLEGAL_START_AND_END_CHARACTERS_FOR_USERNAME_IN_REPOSITORY = ["-", "_"];
 export const TASK_ASSIGN_MK_TEXT = "MK bilden und zuordnen";
 
 export default class Bot {
@@ -443,15 +442,8 @@ export default class Bot {
     );
   }
 
-  private getCleanUsernameForRepository(gitlabUser: GitlabUser): string {
-    let tmpUser = gitlabUser.username;
-    for (
-      const illigalCharacter
-        in ILLEGAL_START_AND_END_CHARACTERS_FOR_USERNAME_IN_REPOSITORY
-    ) {
-      tmpUser = tmpUser.replace(illigalCharacter, "");
-    }
-    return tmpUser;
+  private sanitizeRepositoryName(repositoryName: string): string {
+    return repositoryName.replace(/[-_]{2,}/, "");
   }
 
   private async createHomeworkProjectFork(
@@ -462,13 +454,13 @@ export default class Bot {
   ): Promise<{ issue: Issue; fork: GitlabProject; dueDate: Date }> {
     const homeworkProject = await this.gitlab.getTemplateProject(homework);
 
-    const forkName = `homework-${
-      this.getCleanUsernameForRepository(gitlabUser)
-    }-${
-      Math.floor(
-        Math.random() * 1000000000000,
-      )
-    }`;
+    const forkName = this.sanitizeRepositoryName(
+      `homework-${gitlabUser.username}-${
+        Math.floor(
+          Math.random() * 1000000000000,
+        )
+      }`,
+    );
     const fork = await this.gitlab.forkHomework(homeworkProject!.id, forkName);
 
     const dueDate = this.calculateDueDateFromTask(homeworkTask);
