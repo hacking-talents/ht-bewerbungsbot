@@ -443,6 +443,17 @@ export default class Bot {
     );
   }
 
+  private getCleanUsernameForRepository(gitlabUser: GitlabUser): string {
+    let tmpUser = gitlabUser.username;
+    for (
+      const illigalCharacter
+        in ILLEGAL_START_AND_END_CHARACTERS_FOR_USERNAME_IN_REPOSITORY
+    ) {
+      tmpUser = tmpUser.replace(illigalCharacter, "");
+    }
+    return tmpUser;
+  }
+
   private async createHomeworkProjectFork(
     candidate: Candidate,
     gitlabUser: GitlabUser,
@@ -451,16 +462,9 @@ export default class Bot {
   ): Promise<{ issue: Issue; fork: GitlabProject; dueDate: Date }> {
     const homeworkProject = await this.gitlab.getTemplateProject(homework);
 
-    // ensure the username for the repository does not contain any of the "illegal" characters
-    let tmpUser = gitlabUser.username;
-    for (
-      const illigalCharacter
-        in ILLEGAL_START_AND_END_CHARACTERS_FOR_USERNAME_IN_REPOSITORY
-    ) {
-      tmpUser = tmpUser.replace(illigalCharacter, "");
-    }
-
-    const forkName = `homework-${tmpUser}-${
+    const forkName = `homework-${
+      this.getCleanUsernameForRepository(gitlabUser)
+    }-${
       Math.floor(
         Math.random() * 1000000000000,
       )
