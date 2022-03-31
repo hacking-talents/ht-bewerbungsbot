@@ -449,7 +449,10 @@ export default class Bot {
     homeworkTask: Task,
   ): Promise<{ issue: Issue; fork: GitlabProject; dueDate: Date }> {
     const homeworkProject = await this.gitlab.getTemplateProject(homework);
-    const forkName = `homework-${gitlabUser.username}-${
+
+    // ugly fix which should be done in a more proper way
+    const tmpUser = gitlabUser.username.replace("_", "");
+    const forkName = `homework-${tmpUser}-${
       Math.floor(
         Math.random() * 1000000000000,
       )
