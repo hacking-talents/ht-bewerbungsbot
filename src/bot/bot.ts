@@ -24,6 +24,7 @@ export const GITLAB_USERNAME_FIELD_NAME = "GitLab Account";
 export const GITLAB_REPO_FIELD_NAME = "GitLab Repo";
 const GITHUB_BASE_URL = "https://gitlab.com/";
 const DEFAULT_HOMEWORK_DURATION_IN_DAYS = 8;
+const ILLEGAL_START_AND_END_CHARACTERS_FOR_USERNAME_IN_REPOSITORY = ["-", "_"];
 export const TASK_ASSIGN_MK_TEXT = "MK bilden und zuordnen";
 
 export default class Bot {
@@ -450,8 +451,15 @@ export default class Bot {
   ): Promise<{ issue: Issue; fork: GitlabProject; dueDate: Date }> {
     const homeworkProject = await this.gitlab.getTemplateProject(homework);
 
-    // ugly fix which should be done in a more proper way
-    const tmpUser = gitlabUser.username.replace("_", "");
+    // ensure the username for the repository does not contain any of the "illegal" characters
+    let tmpUser = gitlabUser.username;
+    for (
+      const illigalCharacter
+        in ILLEGAL_START_AND_END_CHARACTERS_FOR_USERNAME_IN_REPOSITORY
+    ) {
+      tmpUser = tmpUser.replace(illigalCharacter, "");
+    }
+
     const forkName = `homework-${tmpUser}-${
       Math.floor(
         Math.random() * 1000000000000,
