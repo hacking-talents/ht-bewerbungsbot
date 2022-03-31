@@ -8,7 +8,7 @@ import {
   CandidateSingleLineField,
   Task,
 } from "../recruitee/types.ts";
-import { addDaysToDate } from "../tools.ts";
+import { addDaysToDate, sanitizeRepositoryName } from "../tools.ts";
 import { isDropdownField, isSingleLineField } from "./../recruitee/tools.ts";
 import { EmojiErrorCodes } from "../errormojis.ts";
 import { RecruiteeError } from "../recruitee/RecruiteeError.ts";
@@ -442,10 +442,6 @@ export default class Bot {
     );
   }
 
-  private sanitizeRepositoryName(repositoryName: string): string {
-    return repositoryName.replace(/[-_]{2,}/, "");
-  }
-
   private async createHomeworkProjectFork(
     candidate: Candidate,
     gitlabUser: GitlabUser,
@@ -454,7 +450,7 @@ export default class Bot {
   ): Promise<{ issue: Issue; fork: GitlabProject; dueDate: Date }> {
     const homeworkProject = await this.gitlab.getTemplateProject(homework);
 
-    const forkName = this.sanitizeRepositoryName(
+    const forkName = sanitizeRepositoryName(
       `homework-${gitlabUser.username}-${
         Math.floor(
           Math.random() * 1000000000000,
