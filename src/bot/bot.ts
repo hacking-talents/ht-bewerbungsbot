@@ -8,7 +8,7 @@ import {
   CandidateSingleLineField,
   Task,
 } from "../recruitee/types.ts";
-import { addDaysToDate } from "../tools.ts";
+import { addDaysToDate, sanitizeRepositoryName } from "../tools.ts";
 import { isDropdownField, isSingleLineField } from "./../recruitee/tools.ts";
 import { EmojiErrorCodes } from "../errormojis.ts";
 import { RecruiteeError } from "../recruitee/RecruiteeError.ts";
@@ -450,13 +450,13 @@ export default class Bot {
   ): Promise<{ issue: Issue; fork: GitlabProject; dueDate: Date }> {
     const homeworkProject = await this.gitlab.getTemplateProject(homework);
 
-    // ugly fix which should be done in a more proper way
-    const tmpUser = gitlabUser.username.replace("_", "");
-    const forkName = `homework-${tmpUser}-${
-      Math.floor(
-        Math.random() * 1000000000000,
-      )
-    }`;
+    const forkName = sanitizeRepositoryName(
+      `homework-${gitlabUser.username}-${
+        Math.floor(
+          Math.random() * 1000000000000,
+        )
+      }`,
+    );
     const fork = await this.gitlab.forkHomework(homeworkProject!.id, forkName);
 
     const dueDate = this.calculateDueDateFromTask(homeworkTask);
