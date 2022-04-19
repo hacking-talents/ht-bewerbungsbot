@@ -21,8 +21,7 @@
 
 The required environment variables can be found in the `.env.example` file.
 
-The hacking-talents configuration is available in the gopass password manager
-under `misc/bewerbungsbot-Env`.
+The hacking-talents configuration is available in the company password manager.
 
 To use the environment variables inside your project, you have to `source`the
 file:
